@@ -24,6 +24,13 @@ class PlexAPIRequester:
         response = self.get_request(endpoint, params)
         return response
 
+    def get_metadata(self, movie_id: int) -> Response:
+        """Get metadata for a specific movie."""
+        endpoint = f"library/metadata/{movie_id}"
+
+        response = self.get_request(endpoint, {})
+        return response
+
     def upload_poster(self, movie_id: int, poster_url: str) -> bool:
         """Upload a poster for a movie."""
         endpoint = f"library/metadata/{movie_id}/posters"
