@@ -30,5 +30,4 @@ def get_request(url: str, params: dict = {}) -> requests.Response:
 
     response = session.get(url, params=params, headers=headers)
     response.raise_for_status()
-    print(response.headers)
     return response
