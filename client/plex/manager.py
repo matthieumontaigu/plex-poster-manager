@@ -1,6 +1,6 @@
 import logging
 
-from client.plex.parser import get_movies
+from client.plex.parser import get_movie_attributes, get_movies
 
 from .api import PlexAPIRequester
 
@@ -29,3 +29,11 @@ class PlexManager:
 
     def update_release_date(self, movie_id: int, release_date: str) -> bool:
         return self.api_requester.update_release_date(movie_id, release_date)
+
+    def get_metadata(self, movie_id: int) -> dict[str, str | None]:
+        api_response = self.api_requester.get_metadata(movie_id)
+        return get_movie_attributes(api_response)
+
+    def get_tmdb_id(self, movie_id: int) -> str | None:
+        metadata = self.get_metadata(movie_id)
+        return metadata.get("tmdb_id")
