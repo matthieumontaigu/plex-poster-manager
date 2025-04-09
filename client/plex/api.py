@@ -10,10 +10,9 @@ class PlexAPIRequester:
 
     def get_all_movies(self) -> Response | None:
         """Get all movies."""
-        endpoint = f"library/all"
-        params = {"type": 1}
+        endpoint = f"library/sections/6/all"
 
-        response = self.get(endpoint, params)
+        response = self.get(endpoint, {})
         return response
 
     def get_recently_added_movies(self) -> Response | None:
