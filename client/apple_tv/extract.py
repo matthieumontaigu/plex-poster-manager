@@ -5,21 +5,14 @@ from utils.parsing import parse_html
 from utils.requests_utils import get_request
 
 
-def extract_artworks(url: str) -> dict[str, str]:
+def get_apple_tv_artworks(url: str) -> tuple[str | None, str | None]:
     response = get_request(url)
-    response.raise_for_status()
     parsed_page = parse_html(response.text)
 
-    logo = get_logo_url(parsed_page)
-    background = get_background_url(parsed_page)
+    logo_url = get_logo_url(parsed_page)
+    background_url = get_background_url(parsed_page)
 
-    artworks = {}
-    if logo is not None:
-        artworks["logo_url"] = logo
-
-    if background is not None:
-        artworks["background_url"] = background
-    return artworks
+    return background_url, logo_url
 
 
 def get_logo_url(page: BeautifulSoup) -> str | None:
