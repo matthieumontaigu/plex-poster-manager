@@ -13,10 +13,16 @@ class PlexManager:
 
     def get_all_movies(self) -> list[dict[str, str | None]]:
         api_response = self.api_requester.get_all_movies()
+        if api_response is None:
+            self.logger.error("Failed to fetch all movies from Plex.")
+            return []
         return get_movies(api_response)
 
     def get_recently_added_movies(self) -> list[dict[str, str | None]]:
         api_response = self.api_requester.get_recently_added_movies()
+        if api_response is None:
+            self.logger.error("Failed to fetch recently added movies from Plex.")
+            return []
         return get_movies(api_response)
 
     def update_artworks(
@@ -54,8 +60,19 @@ class PlexManager:
     def update_release_date(self, movie_id: int, release_date: str) -> bool:
         return self.api_requester.update_release_date(movie_id, release_date)
 
+    def exists(self, movie_id: int) -> bool:
+        """
+        Check if a movie exists in the Plex library by its ID.
+        :param movie_id: The Plex movie ID.
+        :return: True if the movie exists, False otherwise.
+        """
+        api_response = self.api_requester.get_metadata(movie_id)
+        return api_response is not None
+
     def get_metadata(self, movie_id: int) -> dict[str, str | None]:
         api_response = self.api_requester.get_metadata(movie_id)
+        if api_response is None:
+            return {}
         return get_movie_attributes(api_response)
 
     def get_tmdb_id(self, movie_id: int) -> str | None:

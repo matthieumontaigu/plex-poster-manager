@@ -8,7 +8,7 @@ class PlexAPIRequester:
         self.token = token
         self.headers = {"X-Plex-Token": self.token}
 
-    def get_all_movies(self) -> Response:
+    def get_all_movies(self) -> Response | None:
         """Get all movies."""
         endpoint = f"library/all"
         params = {"type": 1}
@@ -16,7 +16,7 @@ class PlexAPIRequester:
         response = self.get(endpoint, params)
         return response
 
-    def get_recently_added_movies(self) -> Response:
+    def get_recently_added_movies(self) -> Response | None:
         """Get recently added movies."""
         endpoint = f"library/recentlyAdded"
         params = {"type": 1}
@@ -24,7 +24,7 @@ class PlexAPIRequester:
         response = self.get(endpoint, params)
         return response
 
-    def get_metadata(self, movie_id: int) -> Response:
+    def get_metadata(self, movie_id: int) -> Response | None:
         """Get metadata for a specific movie."""
         endpoint = f"library/metadata/{movie_id}"
 
@@ -65,11 +65,16 @@ class PlexAPIRequester:
         response = self.put(endpoint, params)
         return response.status_code == 200
 
-    def get(self, endpoint: str, params: dict) -> Response:
+    def get(self, endpoint: str, params: dict) -> Response | None:
         url = f"{self.api_url}/{endpoint}"
-        response = requests.get(url, headers=self.headers, params=params)
-        response.raise_for_status()
-        return response
+        try:
+            response = requests.get(url, headers=self.headers, params=params)
+            response.raise_for_status()
+            return response
+        except requests.exceptions.HTTPError as e:
+            if response.status_code == 404:
+                return None
+            raise e
 
     def post(self, endpoint: str, params: dict) -> Response:
         url = f"{self.api_url}/{endpoint}"
