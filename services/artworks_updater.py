@@ -1,38 +1,146 @@
-from client.apple_tv.extract import extract_artworks
-from client.itunes.searcher import iTunesSearcher
-from client.plex.manager import PlexManager
+import logging
+import time
 
-# filepath: /Users/matthieu/dev/plex-poster-manager/services/artworks_updater.py
+from client.apple_tv.extract import get_apple_tv_artworks
+from client.itunes.extract import get_itunes_artworks
+from client.plex.manager import PlexManager
+from services.metadata_manager import MetadataManager
 
 
 class ArtworksUpdater:
-    def __init__(self, plex_manager: PlexManager, itunes_searcher: iTunesSearcher):
+    def __init__(
+        self, plex_manager: PlexManager, metadata_manager: MetadataManager
+    ) -> None:
         self.plex_manager = plex_manager
-        self.itunes_searcher = itunes_searcher
+        self.metadata_manager = metadata_manager
+        self.countries = ["fr", "us", "gb"]
+        self.logger = logging.getLogger(__name__)
 
     def update_artworks(self, movie: dict) -> None:
-        movie = self.get_artworks(movie)
-        self.plex_manager.update_artworks(
-            movie["plex_movie_id"],
-            movie.get("poster_url", ""),
-            movie.get("background_url", ""),
-            movie.get("logo_url", ""),
-        )
+        self.logger.info(f"Processing artworks for {movie['title']}")
 
-    def get_artworks(self, movie: dict) -> dict[str, str]:
-        """
-        Fetches artworks for a given movie by searching on iTunes and extracting artworks.
-        :param movie: A dictionary containing movie details.
-        :return: A dictionary with artwork URLs (e.g., logo, background).
-        """
-        # Search for the movie on iTunes
-        itunes_movie = self.itunes_searcher.search_movie(movie)
-        if not itunes_movie:
-            return movie
-        else:
-            movie.update(itunes_movie)
+        plex_movie_id = movie["plex_movie_id"]
+        title = movie["title"]
+        artworks = self.get_artworks(movie)
+        for artwork_type, artwork in artworks.items():
+            if not artwork:
+                if artwork_type == "release_date":
+                    continue
+                self.logger.warning(f"No {artwork_type} found for movie {title}")
+                continue
+
+            elif artwork_type == "poster":
+                poster_url = artwork["url"]
+                success = self.plex_manager.upload_poster(plex_movie_id, poster_url)
+                if success:
+                    self.logger.info(f"Uploaded poster for movie {title}")
+                else:
+                    self.logger.error(f"Failed to upload poster for movie {title}")
+                time.sleep(0.5)
+
+            elif artwork_type == "background":
+                background_url = artwork["url"]
+                success = self.plex_manager.upload_background(
+                    plex_movie_id, background_url
+                )
+                if success:
+                    self.logger.info(f"Uploaded background for movie {title}")
+                else:
+                    self.logger.error(f"Failed to upload background for movie {title}")
+                time.sleep(0.5)
+
+            elif artwork_type == "logo":
+                logo_url = artwork["url"]
+                success = self.plex_manager.upload_logo(plex_movie_id, logo_url)
+                if success:
+                    self.logger.info(f"Uploaded logo for movie {title}")
+                else:
+                    self.logger.error(f"Failed to upload logo for movie {title}")
+                time.sleep(0.5)
+
+            elif artwork_type == "release_date":
+                release_date = artwork["date"]
+                self.plex_manager.update_release_date(plex_movie_id, release_date)
+                time.sleep(0.5)
+
+            else:
+                self.logger.error(
+                    f"Unknown artwork type: {artwork_type} for movie {title}"
+                )
+                continue
+
+    def get_artworks(self, movie: dict) -> dict[str, dict[str, str]]:
+        artworks: dict[str, dict[str, str]] = {
+            "poster": {},
+            "background": {},
+            "logo": {},
+            "release_date": {},
+        }
+        for country in self.countries:
+            if artworks["poster"] and artworks["background"] and artworks["logo"]:
+                break
+
+            self.logger.info(f"Fetching artworks for {movie['title']} in {country}")
+
+            title = self.get_movie_title(movie, country)
+            if not title:
+                continue
+
+            poster_url, background_url, logo_url, release_date = self.extract_artworks(
+                title, movie["director"], country
+            )
+            if poster_url and not artworks["poster"]:
+                self.logger.info(f"Found poster for {title} in {country}: {poster_url}")
+                artworks["poster"] = {
+                    "url": poster_url,
+                    "country": country,
+                }
+            if background_url and not artworks["background"]:
+                self.logger.info(
+                    f"Found background for {title} in {country}: {background_url}"
+                )
+                artworks["background"] = {
+                    "url": background_url,
+                    "country": country,
+                }
+            if logo_url and not artworks["logo"]:
+                self.logger.info(f"Found logo for {title} in {country}: {logo_url}")
+                artworks["logo"] = {
+                    "url": logo_url,
+                    "country": country,
+                }
+            if release_date and country == "fr":
+                self.logger.info(f"Found release date for {title}: {release_date}")
+                artworks["release_date"] = {
+                    "date": release_date,
+                    "country": country,
+                }
+            time.sleep(1.0)
+
+        return artworks
+
+    def get_movie_title(self, movie: dict, country: str) -> str | None:
+        if country == "fr":
+            return movie["title"]
+
+        tmdb_id = movie.get("tmdb_id") or self.plex_manager.get_tmdb_id(
+            movie["plex_movie_id"]
+        )
+        if not tmdb_id:
+            return None
+        return self.metadata_manager.get_localized_title(tmdb_id, country)
+
+    @staticmethod
+    def extract_artworks(
+        title: str, directors: list[str], country: str
+    ) -> tuple[str, str, str, str]:
+        itunes_url, poster_url, release_date = get_itunes_artworks(
+            title, directors, country
+        )
+        if not itunes_url:
+            return "", "", "", ""
+
         # Extract artworks from the iTunes URL
-        apple_tv_artworks = extract_artworks(itunes_movie["itunes_url"])
-        if apple_tv_artworks:
-            movie.update(apple_tv_artworks)
-        return movie
+        time.sleep(1.0)
+        background_url, logo_url = get_apple_tv_artworks(itunes_url)
+        return poster_url, background_url, logo_url, release_date
