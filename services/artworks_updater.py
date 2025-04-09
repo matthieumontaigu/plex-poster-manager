@@ -88,25 +88,36 @@ class ArtworksUpdater:
             if not title:
                 continue
 
-            poster_url, background_url, logo_url, release_date = self.extract_artworks(
+            country_artworks = self.extract_artworks(
                 title, movie["director"], year, country
             )
+            if country_artworks is None:
+                if country == "fr":
+                    self.logger.warning(f"No FR artworks found for {title}")
+                continue
+
+            poster_url, background_url, logo_url, release_date = country_artworks
+
             if poster_url and not artworks["poster"]:
-                self.logger.info(f"Found poster for {title} in {country}: {poster_url}")
+                self.logger.info(
+                    f"Found {country.upper()} poster for {title}: {poster_url}"
+                )
                 artworks["poster"] = {
                     "url": poster_url,
                     "country": country,
                 }
             if background_url and not artworks["background"]:
                 self.logger.info(
-                    f"Found background for {title} in {country}: {background_url}"
+                    f"Found {country.upper()} background for {title}: {background_url}"
                 )
                 artworks["background"] = {
                     "url": background_url,
                     "country": country,
                 }
             if logo_url and not artworks["logo"]:
-                self.logger.info(f"Found logo for {title} in {country}: {logo_url}")
+                self.logger.info(
+                    f"Found {country.upper()} logo for {title}: {logo_url}"
+                )
                 artworks["logo"] = {
                     "url": logo_url,
                     "country": country,
@@ -139,14 +150,12 @@ class ArtworksUpdater:
     @staticmethod
     def extract_artworks(
         title: str, directors: list[str], year: int, country: str
-    ) -> tuple[str, str, str, str]:
-        itunes_url, poster_url, release_date = get_itunes_artworks(
-            title, directors, year, country
-        )
-        if not itunes_url:
-            return "", "", "", ""
+    ) -> tuple[str, str, str, str] | None:
+        artworks = get_itunes_artworks(title, directors, year, country)
+        if artworks is None:
+            return None
 
-        # Extract artworks from the iTunes URL
+        itunes_url, poster_url, release_date = artworks
         time.sleep(1.0)
         background_url, logo_url = get_apple_tv_artworks(itunes_url)
         return poster_url, background_url, logo_url, release_date
