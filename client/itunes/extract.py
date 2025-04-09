@@ -5,19 +5,23 @@ from utils.string_utils import normalize
 
 
 def get_itunes_artworks(
-    title: str, country: str, directors: list[str]
-) -> tuple[str, str, str] | None:
+    title: str, directors: list[str], country: str
+) -> tuple[str, str, str]:
     candidates = search_movies(country, title.lower())
     match = get_matching_movie(candidates, title, directors)
     if not match:
-        return None
+        return "", "", ""
 
-    return get_artworks(match)
+    itunes_url, poster_url, release_date = get_artworks(match)
+    return itunes_url, poster_url, release_date
 
 
 def get_matching_movie(
     candidates: list[dict], title: str, directors: list[str]
 ) -> dict:
+    if len(candidates) == 1:
+        return candidates[0]
+
     for candidate in candidates:
         if is_matching(candidate, title, directors):
             return candidate
