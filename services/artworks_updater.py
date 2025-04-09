@@ -70,6 +70,8 @@ class ArtworksUpdater:
                 continue
 
     def get_artworks(self, movie: dict) -> dict[str, dict[str, str]]:
+        year = self.get_year(movie)
+
         artworks: dict[str, dict[str, str]] = {
             "poster": {},
             "background": {},
@@ -87,7 +89,7 @@ class ArtworksUpdater:
                 continue
 
             poster_url, background_url, logo_url, release_date = self.extract_artworks(
-                title, movie["director"], country
+                title, movie["director"], year, country
             )
             if poster_url and not artworks["poster"]:
                 self.logger.info(f"Found poster for {title} in {country}: {poster_url}")
@@ -130,12 +132,16 @@ class ArtworksUpdater:
             return None
         return self.metadata_manager.get_localized_title(tmdb_id, country)
 
+    def get_year(self, movie: dict) -> int:
+        year = int(movie["release_date"][:4])
+        return year
+
     @staticmethod
     def extract_artworks(
-        title: str, directors: list[str], country: str
+        title: str, directors: list[str], year: int, country: str
     ) -> tuple[str, str, str, str]:
         itunes_url, poster_url, release_date = get_itunes_artworks(
-            title, directors, country
+            title, directors, year, country
         )
         if not itunes_url:
             return "", "", "", ""
