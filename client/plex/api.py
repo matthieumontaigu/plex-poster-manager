@@ -1,3 +1,5 @@
+import logging
+
 import requests
 from requests import Response
 
@@ -7,6 +9,7 @@ class PlexAPIRequester:
         self.api_url = api_url.rstrip("/")
         self.token = token
         self.headers = {"X-Plex-Token": self.token}
+        self.logger = logging.getLogger(__name__)
 
     def get_all_movies(self) -> Response | None:
         """Get all movies."""
@@ -36,6 +39,8 @@ class PlexAPIRequester:
         params = {"url": poster_url}
 
         response = self.post(endpoint, params)
+        if response is None:
+            return False
         return response.status_code == 200
 
     def upload_background(self, movie_id: int, background_url: str) -> bool:
@@ -44,6 +49,8 @@ class PlexAPIRequester:
         params = {"url": background_url}
 
         response = self.post(endpoint, params)
+        if response is None:
+            return False
         return response.status_code == 200
 
     def upload_logo(self, movie_id: int, logo_url: str) -> bool:
@@ -52,6 +59,8 @@ class PlexAPIRequester:
         params = {"url": logo_url}
 
         response = self.post(endpoint, params)
+        if response is None:
+            return False
         return response.status_code == 200
 
     def update_release_date(self, movie_id: int, release_date: str) -> bool:
@@ -62,6 +71,8 @@ class PlexAPIRequester:
         }
 
         response = self.put(endpoint, params)
+        if response is None:
+            return False
         return response.status_code == 200
 
     def get(self, endpoint: str, params: dict) -> Response | None:
@@ -71,18 +82,25 @@ class PlexAPIRequester:
             response.raise_for_status()
             return response
         except requests.exceptions.HTTPError as e:
-            if response.status_code == 404:
-                return None
-            raise e
+            self.logger.error(f"{e}")
+            return None
 
-    def post(self, endpoint: str, params: dict) -> Response:
+    def post(self, endpoint: str, params: dict) -> Response | None:
         url = f"{self.api_url}/{endpoint}"
-        response = requests.post(url, headers=self.headers, params=params)
-        response.raise_for_status()
-        return response
+        try:
+            response = requests.post(url, headers=self.headers, params=params)
+            response.raise_for_status()
+            return response
+        except requests.exceptions.HTTPError as e:
+            self.logger.error(f"{e}")
+            return None
 
-    def put(self, endpoint: str, params: dict) -> Response:
+    def put(self, endpoint: str, params: dict) -> Response | None:
         url = f"{self.api_url}/{endpoint}"
-        response = requests.put(url, headers=self.headers, params=params)
-        response.raise_for_status()
-        return response
+        try:
+            response = requests.put(url, headers=self.headers, params=params)
+            response.raise_for_status()
+            return response
+        except requests.exceptions.HTTPError as e:
+            self.logger.error(f"{e}")
+            return None
