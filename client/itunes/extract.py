@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from client.itunes.parser import get_artworks, get_director, get_title, get_year
 from client.itunes.search import search_movies
 from utils.string_utils import are_match
