@@ -5,14 +5,20 @@ from client.apple_tv.extract import get_apple_tv_artworks
 from client.itunes.extract import get_itunes_artworks
 from client.plex.manager import PlexManager
 from services.metadata_manager import MetadataManager
+from utils.string_utils import are_match
 
 
 class ArtworksUpdater:
     def __init__(
-        self, plex_manager: PlexManager, metadata_manager: MetadataManager
+        self,
+        plex_manager: PlexManager,
+        metadata_manager: MetadataManager,
+        match_title: bool,
     ) -> None:
         self.plex_manager = plex_manager
         self.metadata_manager = metadata_manager
+
+        self.match_title = match_title
         self.countries = ["fr", "us", "gb"]
         self.logger = logging.getLogger(__name__)
 
@@ -26,7 +32,9 @@ class ArtworksUpdater:
             if not artwork:
                 if artwork_type == "release_date":
                     continue
-                self.logger.warning(f"No {artwork_type} found for movie {title}")
+                self.logger.warning(
+                    f"No {artwork_type} found for movie {title}: {plex_movie_id}"
+                )
                 continue
 
             elif artwork_type == "poster":
@@ -60,8 +68,8 @@ class ArtworksUpdater:
 
             elif artwork_type == "release_date":
                 release_date = artwork["date"]
-                self.plex_manager.update_release_date(plex_movie_id, release_date)
-                time.sleep(0.5)
+                # self.plex_manager.update_release_date(plex_movie_id, release_date)
+                # time.sleep(0.5)
 
             else:
                 self.logger.error(
@@ -82,42 +90,46 @@ class ArtworksUpdater:
             if artworks["poster"] and artworks["background"] and artworks["logo"]:
                 break
 
-            self.logger.info(f"Fetching artworks for {movie['title']} in {country}")
-
             title = self.get_movie_title(movie, country)
             if not title:
                 continue
+
+            is_title_match = are_match(movie["title"], title)
+            should_update = self.should_update(is_title_match)
+            should_extract_artworks = self.should_extract(should_update, artworks)
+            if not should_extract_artworks:
+                continue
+
+            self.logger.info(
+                f"Fetching {country.upper()} artworks for {movie['title']}"
+            )
 
             country_artworks = self.extract_artworks(
                 title, movie["director"], year, country
             )
             if country_artworks is None:
                 if country == "fr":
-                    self.logger.warning(f"No FR artworks found for {title}")
+                    self.logger.error(
+                        f"No FR artworks found for {title}: {movie['plex_movie_id']}"
+                    )
                 continue
 
             poster_url, background_url, logo_url, release_date = country_artworks
 
-            if poster_url and not artworks["poster"]:
-                self.logger.info(
-                    f"Found {country.upper()} poster for {title}: {poster_url}"
-                )
+            if poster_url and not artworks["poster"] and should_update:
+                self.logger.info(f"Found {country.upper()} poster for {title}")
                 artworks["poster"] = {
                     "url": poster_url,
                     "country": country,
                 }
             if background_url and not artworks["background"]:
-                self.logger.info(
-                    f"Found {country.upper()} background for {title}: {background_url}"
-                )
+                self.logger.info(f"Found {country.upper()} background for {title}")
                 artworks["background"] = {
                     "url": background_url,
                     "country": country,
                 }
-            if logo_url and not artworks["logo"]:
-                self.logger.info(
-                    f"Found {country.upper()} logo for {title}: {logo_url}"
-                )
+            if logo_url and not artworks["logo"] and should_update:
+                self.logger.info(f"Found {country.upper()} logo for {title}")
                 artworks["logo"] = {
                     "url": logo_url,
                     "country": country,
@@ -146,6 +158,20 @@ class ArtworksUpdater:
     def get_year(self, movie: dict) -> int:
         year = int(movie["release_date"][:4])
         return year
+
+    def should_extract(
+        self, should_update: bool, artworks: dict[str, dict[str, str]]
+    ) -> bool:
+        if not artworks["background"]:
+            return True
+
+        if not artworks["poster"] or not artworks["logo"]:
+            return should_update
+
+        return False
+
+    def should_update(self, is_title_match: bool) -> bool:
+        return not self.match_title or is_title_match
 
     @staticmethod
     def extract_artworks(
