@@ -35,11 +35,14 @@ def _get_movies(root: Element) -> list[dict[str, str | int | list[str] | None]]:
 
 def _get_movie_attributes(movie: Element) -> dict[str, str | int | list[str] | None]:
     """Extract movie attributes from the XML element."""
+    title = movie.attrib.get("title")
+    cleaned_title = title.replace("\xa0", " ") if title else ""
+
     addedAt = movie.attrib.get("addedAt")
     added_date = int(addedAt) if addedAt else 0
     attributes = {
         "plex_movie_id": movie.attrib.get("ratingKey"),
-        "title": movie.attrib.get("title"),
+        "title": cleaned_title,
         "year": movie.attrib.get("year"),
         "added_date": added_date,
         "release_date": movie.attrib.get("originallyAvailableAt"),
