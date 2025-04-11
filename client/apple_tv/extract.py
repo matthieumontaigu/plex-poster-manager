@@ -7,6 +7,9 @@ from utils.requests_utils import get_request
 
 def get_apple_tv_artworks(url: str) -> tuple[str | None, str | None]:
     response = get_request(url)
+    if response is None:
+        return None, None
+
     parsed_page = parse_html(response.text)
 
     logo_url = get_logo_url(parsed_page)
