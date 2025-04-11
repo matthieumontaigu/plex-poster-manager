@@ -1,4 +1,18 @@
-def batch_edit(artworks_updater, all_movies, date_from, number_of_edits):
+import argparse
+
+from client.plex.manager import PlexManager
+from client.tmdb.api import TMDBAPIRequester
+from services.artworks_updater import ArtworksUpdater
+from services.metadata_manager import MetadataManager
+from utils.logger import setup_logging
+
+
+def batch_edit(
+    artworks_updater: ArtworksUpdater,
+    all_movies: list[dict],
+    date_from: int,
+    number_of_edits: int,
+) -> None:
     all_movies_sorted = sorted(
         all_movies, key=lambda movie: movie["added_date"], reverse=True
     )
@@ -13,14 +27,6 @@ def batch_edit(artworks_updater, all_movies, date_from, number_of_edits):
 
 
 if __name__ == "__main__":
-    import argparse
-
-    from client.plex.manager import PlexManager
-    from client.tmdb.api import TMDBAPIRequester
-    from services.artworks_updater import ArtworksUpdater
-    from services.metadata_manager import MetadataManager
-    from utils.logger import setup_logging
-
     parser = argparse.ArgumentParser(description="Batch edit movie artworks.")
     parser.add_argument("--plex-url", required=True, help="Plex server URL")
     parser.add_argument("--plex-token", required=True, help="Plex server token")
