@@ -4,7 +4,20 @@ from client.tmdb.api import TMDBAPIRequester
 class MetadataManager:
     def __init__(self, api_requester: TMDBAPIRequester) -> None:
         self.api_requester = api_requester
-        self.country_languages = {"fr": "fr", "us": "en", "gb": "en", "ca": "fr"}
+        self.country_languages = {
+            "fr": "fr",
+            "us": "en",
+            "gb": "en",
+            "au": "en",
+            "nz": "en",
+            "ca": "fr",
+            "be": "fr",
+            "lu": "fr",
+            "ch": "fr",
+            "de": "de",
+            "it": "it",
+            "es": "es",
+        }
 
     def get_localized_title(self, movie_id: int, country: str) -> str:
         """Fetch the localized title for a movie based on the country."""
