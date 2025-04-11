@@ -12,10 +12,10 @@ class Artworks:
     def get(self) -> dict[str, dict[str, str]]:
         return self.data
 
-    def allow_texted_update(self):
+    def allow_texted_update(self) -> None:
         self.can_update_texted = True
 
-    def disallow_texted_update(self):
+    def disallow_texted_update(self) -> None:
         self.can_update_texted = False
 
     def is_complete(self) -> bool:
