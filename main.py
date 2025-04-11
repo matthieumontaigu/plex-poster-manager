@@ -19,8 +19,6 @@ if __name__ == "__main__":
     config_path = args.config_path
     config = load_json_file(config_path)
 
-    setup_logging()
-
     credentials = config["credentials"]
     plex_url = credentials["plex_url"]
     plex_token = credentials["plex_token"]
