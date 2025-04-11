@@ -1,9 +1,13 @@
+import logging
+
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
 
+logger = logging.getLogger(__name__)
 
-def get_request(url: str, params: dict = {}) -> requests.Response:
+
+def get_request(url: str, params: dict = {}) -> requests.Response | None:
     """
     Make a GET request to the specified URL with retry logic.
     """
@@ -27,7 +31,10 @@ def get_request(url: str, params: dict = {}) -> requests.Response:
             "Version/16.3 Safari/605.1.15"
         )
     }
-
-    response = session.get(url, params=params, headers=headers)
-    response.raise_for_status()
-    return response
+    try:
+        response = session.get(url, headers=headers, params=params)
+        response.raise_for_status()
+        return response
+    except requests.exceptions.HTTPError as e:
+        logger.error(f"{e}")
+        return None
