@@ -94,4 +94,6 @@ class ArtworksService:
                 self.missing_artworks_cache.remove(movie)
                 logger.info(f"All artworks found for {movie['title']}")
 
+            time.sleep(5.0)
+
         logger.info("Finished updating missing artworks from Plex")
