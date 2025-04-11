@@ -3,13 +3,14 @@ import logging
 import requests
 from requests import Response
 
+logger = logging.getLogger(__name__)
+
 
 class PlexAPIRequester:
     def __init__(self, api_url: str, token: str) -> None:
         self.api_url = api_url.rstrip("/")
         self.token = token
         self.headers = {"X-Plex-Token": self.token}
-        self.logger = logging.getLogger(__name__)
 
     def get_all_movies(self) -> Response | None:
         """Get all movies."""
@@ -82,7 +83,7 @@ class PlexAPIRequester:
             response.raise_for_status()
             return response
         except requests.exceptions.HTTPError as e:
-            self.logger.error(f"{e}")
+            logger.error(f"{e}")
             return None
 
     def post(self, endpoint: str, params: dict) -> Response | None:
@@ -92,7 +93,7 @@ class PlexAPIRequester:
             response.raise_for_status()
             return response
         except requests.exceptions.HTTPError as e:
-            self.logger.error(f"{e}")
+            logger.error(f"{e}")
             return None
 
     def put(self, endpoint: str, params: dict) -> Response | None:
@@ -102,5 +103,5 @@ class PlexAPIRequester:
             response.raise_for_status()
             return response
         except requests.exceptions.HTTPError as e:
-            self.logger.error(f"{e}")
+            logger.error(f"{e}")
             return None

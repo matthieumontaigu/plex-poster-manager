@@ -3,23 +3,24 @@ import logging
 from client.plex.api import PlexAPIRequester
 from client.plex.parser import get_movie_attributes, get_movies
 
+logger = logging.getLogger(__name__)
+
 
 class PlexManager:
     def __init__(self, plex_url: str, plex_token: str) -> None:
         self.api_requester = PlexAPIRequester(plex_url, plex_token)
-        self.logger = logging.getLogger(__name__)
 
     def get_all_movies(self) -> list[dict[str, str | int | None]]:
         api_response = self.api_requester.get_all_movies()
         if api_response is None:
-            self.logger.error("Failed to fetch all movies from Plex.")
+            logger.error("Failed to fetch all movies from Plex.")
             return []
         return get_movies(api_response)
 
     def get_recently_added_movies(self) -> list[dict[str, str | int | None]]:
         api_response = self.api_requester.get_recently_added_movies()
         if api_response is None:
-            self.logger.error("Failed to fetch recently added movies from Plex.")
+            logger.error("Failed to fetch recently added movies from Plex.")
             return []
         return get_movies(api_response)
 
