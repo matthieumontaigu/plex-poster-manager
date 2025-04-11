@@ -174,8 +174,9 @@ class ArtworksUpdater:
     def _log_upload_result(
         self, success: bool | None, artwork_type: str, title: str, plex_movie_id: int
     ) -> None:
-        if success is None and artwork_type != "release_date":
-            logger.warning(f"No {artwork_type} found for {title}: {plex_movie_id}")
+        if success is None:
+            if artwork_type != "release_date":
+                logger.warning(f"No {artwork_type} found for {title}: {plex_movie_id}")
             return
 
         if success:
