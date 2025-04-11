@@ -8,6 +8,8 @@ def search_movies(country: str, term: str) -> list[dict]:
     params = {"entity": "movie", "country": country, "term": term}
 
     response = get_request(url, params=params)
+    if response is None:
+        return []
     response_json = response.json()
     if response_json["resultCount"] == 0:
         return []
