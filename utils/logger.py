@@ -1,5 +1,6 @@
 import logging
 import sys
+from pathlib import Path
 
 # ANSI escape codes
 RESET = "\033[0m"
@@ -12,19 +13,24 @@ COLORS = {
 }
 
 
-def setup_logging() -> None:
+def setup_logging(log_path: str | None = None) -> None:
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)
+    record = "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
 
-    handler = logging.StreamHandler(sys.stderr)
-    # formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s")
-    formatter = ColoredFormatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s")
+    logger.handlers = []
 
-    handler.setFormatter(formatter)
+    console_handler = logging.StreamHandler(sys.stderr)
+    colored_formatter = ColoredFormatter(record)
+    console_handler.setFormatter(colored_formatter)
+    logger.addHandler(console_handler)
 
-    # Avoid adding multiple handlers if setup_logging is called more than once
-    if not logger.handlers:
-        logger.addHandler(handler)
+    if log_path:
+        file_path = Path(log_path) / "plex-poster-manager.log"
+        file_handler = logging.FileHandler(file_path)
+        formatter = logging.Formatter(record)
+        file_handler.setFormatter(formatter)
+        logger.addHandler(file_handler)
 
 
 class ColoredFormatter(logging.Formatter):
