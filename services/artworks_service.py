@@ -38,6 +38,7 @@ class ArtworksService:
                 self.handle()
             except Exception:
                 logger.exception("Error in handle loop")
+            time.sleep(self.sleep_duration)
 
     def handle(self) -> None:
         now = time.time()
@@ -52,10 +53,8 @@ class ArtworksService:
 
         self.recently_added_cache.save()
         self.missing_artworks_cache.save()
-        time.sleep(self.sleep_duration)
 
     def update_recently_added(self) -> None:
-        logger.info("Updating latest movies from Plex")
 
         recently_added_movies = self.plex_manager.get_recently_added_movies()
         for movie in recently_added_movies:
@@ -67,9 +66,9 @@ class ArtworksService:
             if is_missing:
                 movie["artworks"] = artworks
                 self.missing_artworks_cache.add(movie)
-                logger.warning(f"Missing artworks detected for {movie['title']}")
+                logger.warning(f"❌ Missing artworks detected for {movie['title']}")
             else:
-                logger.info(f"Updated artworks for movie {movie['title']}")
+                logger.info(f"✅ Updated artworks for movie {movie['title']}")
 
             self.recently_added_cache.add(movie)
 
@@ -78,7 +77,6 @@ class ArtworksService:
         logger.info("Finished updating latest movies from Plex")
 
     def update_missing_artworks(self) -> None:
-        logger.info("Updating missing artworks from Plex")
 
         for plex_movie_id, movie in self.missing_artworks_cache.items():
 
@@ -89,10 +87,10 @@ class ArtworksService:
             is_missing, artworks = self.artworks_updater.update_artworks(movie)
             if is_missing:
                 movie["artworks"] = artworks
-                logger.warning(f"Missing artworks detected for {movie['title']}")
+                logger.warning(f"⚠️ Artworks still not complete for {movie['title']}")
             else:
                 self.missing_artworks_cache.remove(movie)
-                logger.info(f"All artworks found for {movie['title']}")
+                logger.info(f"✅ All artworks found for {movie['title']}")
 
             time.sleep(5.0)
 
