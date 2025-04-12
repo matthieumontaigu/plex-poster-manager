@@ -5,7 +5,27 @@ from client.itunes.match import get_matching_movie
 
 class TestGetMatchingMovie(unittest.TestCase):
 
-    def test_get_matching_movie_slight_title_mismatch(self):
+    def test_get_matching_slight_title_mismatch_1(self):
+        candidates = [
+            {
+                "trackName": "Sonic Le Film 3",
+                "artistName": "Jeff Fowler",
+                "releaseDate": "2024-12-20T08:00:00Z",
+            }
+        ]
+        title = "Sonic 3, le film"
+        directors = ["Jeff Fowler"]
+        year = 2024
+
+        result = get_matching_movie(candidates, title, directors, year)
+        expected_result = {
+            "trackName": "Sonic Le Film 3",
+            "artistName": "Jeff Fowler",
+            "releaseDate": "2024-12-20T08:00:00Z",
+        }
+        self.assertEqual(result, expected_result)
+
+    def test_get_matching_movie_slight_title_mismatch_2(self):
         candidates = [
             {
                 "trackName": "Venom 3 : The Last Dance",
