@@ -7,6 +7,13 @@ def are_match(s1: str, s2: str) -> bool:
     """
     Check if two strings are equal after normalization.
     """
+    return normalize(s1) == normalize(s2)
+
+
+def is_included(s1: str, s2: str) -> bool:
+    """
+    Check if s1 is included in s2 after normalization.
+    """
     return normalize(s1) in normalize(s2)
 
 
