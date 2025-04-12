@@ -1,4 +1,5 @@
 import unicodedata
+from difflib import SequenceMatcher
 from string import punctuation
 
 
@@ -7,6 +8,10 @@ def are_match(s1: str, s2: str) -> bool:
     Check if two strings are equal after normalization.
     """
     return normalize(s1) in normalize(s2)
+
+
+def get_similarity(s1: str, s2: str) -> float:
+    return SequenceMatcher(None, normalize(s1), normalize(s2)).ratio()
 
 
 def normalize(s: str) -> str:
