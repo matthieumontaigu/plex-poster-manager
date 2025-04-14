@@ -1,5 +1,6 @@
 import logging
 import sys
+from logging.handlers import TimedRotatingFileHandler
 from pathlib import Path
 
 # ANSI escape codes
@@ -27,7 +28,10 @@ def setup_logging(log_path: str | None = None) -> None:
 
     if log_path:
         file_path = Path(log_path) / "plex-poster-manager.log"
-        file_handler = logging.FileHandler(file_path)
+        file_handler = TimedRotatingFileHandler(
+            "app.log", when="midnight", interval=1, backupCount=7
+        )
+        file_handler.suffix = "%Y-%m-%d"
         formatter = logging.Formatter(record)
         file_handler.setFormatter(formatter)
         logger.addHandler(file_handler)
