@@ -27,9 +27,9 @@ def setup_logging(log_path: str | None = None) -> None:
     logger.addHandler(console_handler)
 
     if log_path:
-        file_path = Path(log_path) / "plex-poster-manager.log"
+        file_path = Path(log_path) / "app.log"
         file_handler = TimedRotatingFileHandler(
-            "app.log", when="midnight", interval=1, backupCount=7
+            file_path, when="midnight", interval=1, backupCount=7
         )
         file_handler.suffix = "%Y-%m-%d"
         formatter = logging.Formatter(record)
