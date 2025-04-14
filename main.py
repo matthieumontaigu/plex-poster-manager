@@ -26,6 +26,7 @@ if __name__ == "__main__":
 
     artworks_config = config["artworks"]
     match_title = artworks_config["match_title"]
+    match_logo = artworks_config["match_logo"]
     update_release_date = artworks_config["update_release_date"]
     recent_update_interval = artworks_config["recent_update_interval"]
     missing_artwork_interval = artworks_config["missing_artwork_interval"]
@@ -43,6 +44,7 @@ if __name__ == "__main__":
         plex_manager,
         metadata_retriever,
         match_title=match_title,
+        match_logo=match_logo,
         update_release_date=update_release_date,
     )
     artworks_service = ArtworksService(
