@@ -28,7 +28,9 @@ class TMDBAPIRequester:
         logos = movie_images.get("logos", [])
         if logos:
             first_logo = logos[0]
-            return f"{self.image_base_url}{first_logo['file_path']}"
+            return f"{self.image_base_url}{first_logo['file_path']}".replace(
+                ".svg", ".png"
+            )
         return None
 
     def get_movie_images(self, movie_id: int, language: str) -> dict:
