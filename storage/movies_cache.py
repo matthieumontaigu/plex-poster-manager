@@ -20,6 +20,10 @@ class MoviesCache:
             self.cache.remove(key)
             self.updated = True
 
+    def remove_all(self, movies: list[dict]) -> None:
+        for movie in movies:
+            self.remove(movie)
+
     def clear(self, movie: dict) -> None:
         threshold = movie["added_date"]
         keys_before = [

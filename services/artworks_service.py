@@ -79,10 +79,11 @@ class ArtworksService:
 
     def update_missing_artworks(self) -> None:
 
+        to_remove = []
         for plex_movie_id, movie in self.missing_artworks_cache.items():
 
             if not self.plex_manager.exists(plex_movie_id):
-                self.missing_artworks_cache.remove(movie)
+                to_remove.append(movie)
                 continue
 
             is_missing, artworks = self.artworks_updater.update_artworks(movie)
@@ -90,9 +91,11 @@ class ArtworksService:
                 movie["artworks"] = artworks
                 logger.warning(f"⚠️ Artworks still not complete for {movie['title']}")
             else:
-                self.missing_artworks_cache.remove(movie)
+                to_remove.append(movie)
                 logger.info(f"✅ All artworks found for {movie['title']}")
 
             time.sleep(10.0)
+
+        self.missing_artworks_cache.remove_all(to_remove)
 
         logger.info("Finished updating missing artworks from Plex")
