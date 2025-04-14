@@ -40,6 +40,7 @@ def _get_movie_attributes(movie: Element) -> dict[str, str | int | list[str] | N
 
     addedAt = movie.attrib.get("addedAt")
     added_date = int(addedAt) if addedAt else 0
+
     attributes = {
         "plex_movie_id": movie.attrib.get("ratingKey"),
         "title": cleaned_title,

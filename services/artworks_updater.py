@@ -42,7 +42,7 @@ class ArtworksUpdater:
         for artwork_type, artwork in artworks.items():
             success = self.update_artwork(artwork_type, artwork, plex_movie_id)
             self._log_upload_result(success, artwork_type, title, plex_movie_id)
-            is_missing |= self.is_missing_artwork(artwork, success)
+            is_missing |= self.is_missing(artwork, success)
             time.sleep(self.api_call_interval)
 
         if self.update_release_date and release_date:
@@ -51,16 +51,6 @@ class ArtworksUpdater:
             self._log_upload_result(success, "release_date", title, plex_movie_id)
 
         return is_missing, artworks
-
-    def is_missing_artwork(
-        self,
-        artwork: dict[str, str],
-        upload_success: bool | None,
-    ) -> bool:
-        if not upload_success:
-            return True
-
-        return artwork["country"] != self.plex_country
 
     def update_artwork(
         self, artwork_type: str, artwork: dict[str, str], plex_movie_id: int
@@ -83,25 +73,29 @@ class ArtworksUpdater:
         else:
             return None
 
-    def get_artworks(self, movie: dict) -> tuple[dict[str, dict[str, str]], str | None]:
-        year = self.get_year(movie)
+    def is_missing(
+        self,
+        artwork: dict[str, str],
+        upload_success: bool | None,
+    ) -> bool:
+        if not upload_success:
+            return True
 
-        artworks = Artworks()
+        return artwork["country"] != self.plex_country
+
+    def get_artworks(self, movie: dict) -> tuple[dict[str, dict[str, str]], str | None]:
+        title = movie["title"]
+        year = movie["year"]
+
+        artworks = Artworks(title, self.match_title)
         release_date = None
         for country in self.countries:
-            if artworks.is_complete():
-                break
 
             country_title = self.get_country_title(movie, country)
             if not country_title:
                 continue
 
-            if self.can_update_texted_artworks(movie["title"], country_title):
-                artworks.allow_texted_update()
-            else:
-                artworks.disallow_texted_update()
-
-            if not artworks.is_any_missing():
+            if not artworks.should_handle(country_title):
                 continue
 
             logger.info(f"Fetching {country.upper()} artworks for {movie['title']}")
@@ -116,25 +110,26 @@ class ArtworksUpdater:
             poster_url, background_url, logo_url, country_release_date = (
                 country_artworks
             )
-            updated = artworks.update("poster", poster_url, country)
+            updated = artworks.update("poster", poster_url, country, country_title)
             self._log_found_artwork(updated, "poster", country_title, country)
 
-            updated = artworks.update("background", background_url, country)
+            updated = artworks.update(
+                "background", background_url, country, country_title
+            )
             self._log_found_artwork(updated, "background", country_title, country)
 
-            updated = artworks.update("logo", logo_url, country)
+            updated = artworks.update("logo", logo_url, country, country_title)
             self._log_found_artwork(updated, "logo", country_title, country)
 
             if country == self.plex_country:
                 release_date = country_release_date
 
+            if artworks.is_complete():
+                break
+
             time.sleep(self.api_call_interval)
 
         return artworks.get(), release_date
-
-    def get_year(self, movie: dict) -> int:
-        year = int(movie["release_date"][:4])
-        return year
 
     def get_country_title(self, movie: dict, country: str) -> str | None:
         if country == self.plex_country:
@@ -146,11 +141,8 @@ class ArtworksUpdater:
         if not tmdb_id:
             return None
 
+        movie["tmdb_id"] = tmdb_id
         return self.metadata_manager.get_localized_title(tmdb_id, country)
-
-    def can_update_texted_artworks(self, plex_title: str, country_title: str) -> bool:
-        is_title_match = are_match(plex_title, country_title)
-        return not self.match_title or is_title_match
 
     def extract_artworks(
         self, title: str, directors: list[str], year: int, country: str
