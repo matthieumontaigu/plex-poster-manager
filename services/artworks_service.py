@@ -51,6 +51,9 @@ class ArtworksService:
             self.update_missing_artworks()
             self.last_missing_artwork_update = now
 
+        self.recently_added_cache.save()
+        self.missing_artworks_cache.save()
+
     def update_recently_added(self) -> None:
 
         recently_added_movies = self.plex_manager.get_recently_added_movies()
@@ -72,11 +75,9 @@ class ArtworksService:
         last_movie = recently_added_movies[-1]
         self.recently_added_cache.clear(last_movie)
 
-        self.recently_added_cache.save()
         logger.info("Finished updating latest movies from Plex")
 
     def update_missing_artworks(self) -> None:
-        self.missing_artworks_cache.load()
 
         for plex_movie_id, movie in self.missing_artworks_cache.items():
 
@@ -94,5 +95,4 @@ class ArtworksService:
 
             time.sleep(10.0)
 
-        self.missing_artworks_cache.save()
         logger.info("Finished updating missing artworks from Plex")
