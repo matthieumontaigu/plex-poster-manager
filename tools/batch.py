@@ -3,7 +3,7 @@ import argparse
 from client.plex.manager import PlexManager
 from client.tmdb.api import TMDBAPIRequester
 from services.artworks_updater import ArtworksUpdater
-from services.metadata_manager import MetadataManager
+from services.metadata_retriever import MetadataRetriever
 from utils.logger import setup_logging
 
 
@@ -44,8 +44,10 @@ if __name__ == "__main__":
 
     plex_manager = PlexManager(args.plex_url, args.plex_token)
     tmdb_api_requester = TMDBAPIRequester(args.tmdb_api_key)
-    metadata_manager = MetadataManager(tmdb_api_requester)
-    artworks_updater = ArtworksUpdater(plex_manager, metadata_manager, match_title=True)
+    metadata_retriever = MetadataRetriever(tmdb_api_requester)
+    artworks_updater = ArtworksUpdater(
+        plex_manager, metadata_retriever, match_title=True
+    )
 
     all_movies = plex_manager.get_all_movies()
 
