@@ -29,6 +29,9 @@ class MoviesCache:
             self.cache.remove(key)
             self.updated = True
 
+    def load(self) -> None:
+        self.cache.load()
+
     def save(self) -> None:
         if self.updated:
             self.cache.save()
