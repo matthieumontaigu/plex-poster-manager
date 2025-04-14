@@ -1,12 +1,9 @@
 import logging
 import time
 
-from client.apple_tv.extract import get_apple_tv_artworks
-from client.itunes.extract import get_itunes_artworks
 from client.plex.manager import PlexManager
 from models.artworks import Artworks
-from services.metadata_manager import MetadataManager
-from utils.string_utils import are_match
+from services.metadata_retriever import MetadataRetriever
 
 logger = logging.getLogger(__name__)
 
@@ -15,19 +12,21 @@ class ArtworksUpdater:
     def __init__(
         self,
         plex_manager: PlexManager,
-        metadata_manager: MetadataManager,
+        metadata_retriever: MetadataRetriever,
         plex_country: str = "fr",
         countries: list[str] = ["fr", "us", "gb", "be", "ch", "lu"],
         match_title: bool = True,
+        match_logo: bool = False,
         update_release_date: bool = False,
         api_call_interval: float = 1.0,
     ) -> None:
         self.plex_manager = plex_manager
-        self.metadata_manager = metadata_manager
+        self.metadata_retriever = metadata_retriever
 
         self.plex_country = plex_country
         self.countries = countries
         self.match_title = match_title
+        self.match_logo = match_logo
         self.update_release_date = update_release_date
         self.api_call_interval = api_call_interval
 
@@ -81,7 +80,9 @@ class ArtworksUpdater:
         if not upload_success:
             return True
 
-        return artwork["country"] != self.plex_country
+        return (
+            artwork["country"] != self.plex_country or artwork.get("source") == "tmdb"
+        )
 
     def get_artworks(self, movie: dict) -> tuple[dict[str, dict[str, str]], str | None]:
         title = movie["title"]
@@ -100,7 +101,7 @@ class ArtworksUpdater:
 
             logger.info(f"Fetching {country.upper()} artworks for {movie['title']}")
 
-            country_artworks = self.extract_artworks(
+            country_artworks = self.metadata_retriever.get_apple_artworks(
                 country_title, movie["director"], year, country
             )
             if country_artworks is None:
@@ -129,12 +130,44 @@ class ArtworksUpdater:
 
             time.sleep(self.api_call_interval)
 
+        self.match_logo_to_poster(movie, artworks)
+
         return artworks.get(), release_date
 
     def get_country_title(self, movie: dict, country: str) -> str | None:
         if country == self.plex_country:
             return movie["title"]
 
+        tmdb_id = self.get_tmdb_id(movie)
+        return self.metadata_retriever.get_localized_title(tmdb_id, country)
+
+    def match_logo_to_poster(self, movie: dict, artworks: Artworks) -> None:
+        if not self.match_logo:
+            return
+
+        if (
+            artworks.logo_matches_poster()
+            or artworks.get_poster_country() != self.plex_country
+        ):
+            return
+
+        tmdb_id = self.get_tmdb_id(movie)
+        tmdb_logo_url = self.metadata_retriever.get_tmdb_logo_url(
+            tmdb_id, self.plex_country
+        )
+        updated = artworks.update(
+            "logo",
+            tmdb_logo_url,
+            self.plex_country,
+            movie["title"],
+            "tmdb",
+            override=True,
+        )
+        self._log_found_artwork(
+            updated, "logo", movie["title"], self.plex_country, "tmdb"
+        )
+
+    def get_tmdb_id(self, movie: dict) -> int | None:
         tmdb_id = movie.get("tmdb_id") or self.plex_manager.get_tmdb_id(
             movie["plex_movie_id"]
         )
@@ -142,21 +175,7 @@ class ArtworksUpdater:
             return None
 
         movie["tmdb_id"] = tmdb_id
-        return self.metadata_manager.get_localized_title(tmdb_id, country)
-
-    def extract_artworks(
-        self, title: str, directors: list[str], year: int, country: str
-    ) -> tuple[str, str, str, str] | None:
-        artworks = get_itunes_artworks(title, directors, year, country)
-        if artworks is None:
-            return None
-
-        itunes_url, poster_url, release_date = artworks
-
-        time.sleep(self.api_call_interval)
-
-        background_url, logo_url = get_apple_tv_artworks(itunes_url)
-        return poster_url, background_url, logo_url, release_date
+        return tmdb_id
 
     def _log_missing_artworks(self, movie: dict, country: str) -> None:
         title = movie["title"]
@@ -167,10 +186,16 @@ class ArtworksUpdater:
             )
 
     def _log_found_artwork(
-        self, found: bool, artwork_type: str, title: str, country: str
+        self,
+        found: bool,
+        artwork_type: str,
+        title: str,
+        country: str,
+        source: str = "",
     ) -> None:
         if found:
-            logger.info(f"Found {country.upper()} {artwork_type} for {title}")
+            source = f"{source} " if source else ""
+            logger.info(f"Found {source}{country.upper()} {artwork_type} for {title}")
 
     def _log_upload_result(
         self, success: bool | None, artwork_type: str, title: str, plex_movie_id: int
