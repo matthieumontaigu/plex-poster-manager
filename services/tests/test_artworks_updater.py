@@ -764,6 +764,87 @@ class TestArtworksUpdater(unittest.TestCase):
         self.assertEqual(artworks, expected_artworks)
         self.assertEqual(release_date, expected_release_date)
 
+    def test_is_complete_all_artworks_match_plex_country(self):
+        """All artworks match the Plex country, should return True."""
+        self.artworks_updater = ArtworksUpdater(
+            plex_manager=self.plex_manager,
+            metadata_retriever=self.metadata_retriever,
+            plex_country="fr",
+        )
+
+        artworks = {
+            "poster": {"url": "poster_url", "country": "fr"},
+            "background": {"url": "background_url", "country": "fr"},
+            "logo": {"url": "logo_url", "country": "fr"},
+        }
+
+        result = self.artworks_updater.is_complete(artworks)
+        self.assertTrue(result)
+
+    def test_is_complete_artwork_with_different_country(self):
+        """At least one artwork has a different country, should return False."""
+        self.artworks_updater = ArtworksUpdater(
+            plex_manager=self.plex_manager,
+            metadata_retriever=self.metadata_retriever,
+            plex_country="fr",
+        )
+
+        artworks = {
+            "poster": {"url": "poster_url", "country": "fr"},
+            "background": {"url": "background_url", "country": "us"},
+            "logo": {"url": "logo_url", "country": "fr"},
+        }
+
+        result = self.artworks_updater.is_complete(artworks)
+        self.assertFalse(result)
+
+    def test_is_complete_all_artworks_match_plex_country_with_source(self):
+        """All artworks match the Plex country but one has source, should return False."""
+        self.artworks_updater = ArtworksUpdater(
+            plex_manager=self.plex_manager,
+            metadata_retriever=self.metadata_retriever,
+            plex_country="fr",
+        )
+
+        artworks = {
+            "poster": {"url": "poster_url", "country": "fr"},
+            "background": {"url": "background_url", "country": "fr"},
+            "logo": {"url": "logo_url", "country": "fr", "source": "tmdb"},
+        }
+
+        result = self.artworks_updater.is_complete(artworks)
+        self.assertFalse(result)
+
+    def test_is_complete_one_missing_artwork(self):
+        """One missing artwork, should return False."""
+        self.artworks_updater = ArtworksUpdater(
+            plex_manager=self.plex_manager,
+            metadata_retriever=self.metadata_retriever,
+            plex_country="fr",
+        )
+
+        artworks = {
+            "poster": {"url": "poster_url", "country": "fr"},
+            "background": {"url": "background_url", "country": "fr"},
+            "logo": {},
+        }
+
+        result = self.artworks_updater.is_complete(artworks)
+        self.assertFalse(result)
+
+    def test_is_complete_empty_artworks(self):
+        """Empty artworks dictionary, should return False."""
+        self.artworks_updater = ArtworksUpdater(
+            plex_manager=self.plex_manager,
+            metadata_retriever=self.metadata_retriever,
+            plex_country="fr",
+        )
+
+        artworks = {}
+
+        result = self.artworks_updater.is_complete(artworks)
+        self.assertFalse(result)
+
 
 if __name__ == "__main__":
     unittest.main()
