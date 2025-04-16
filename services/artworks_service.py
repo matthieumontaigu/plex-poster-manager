@@ -24,6 +24,7 @@ class ArtworksService:
         self.missing_artwork_interval = missing_artwork_interval
         self.last_recent_update = 0.0
         self.last_missing_artwork_update = 0.0
+        self.api_call_interval = 15.0
 
         self.recently_added_cache = MoviesCache(cache_path, "recently_added")
         self.missing_artworks_cache = MoviesCache(cache_path, "missing_artworks")
@@ -58,27 +59,19 @@ class ArtworksService:
 
         recently_added_movies = self.plex_manager.get_recently_added_movies()
         for movie in recently_added_movies:
-            title = movie["title"]
 
             if movie in self.recently_added_cache:
                 continue
 
-            artworks, uploaded, is_complete = self.artworks_updater.update_artworks(
-                movie
-            )
-            if not uploaded:
-                logger.warning(f"\n⚠️ Failed to upload artworks for {title}\n")
-                continue
+            status = self.update_movie_artworks(movie)
 
-            self.recently_added_cache.add(movie)
+            if status in ("success", "incomplete_artworks"):
+                self.recently_added_cache.add(movie)
 
-            if not is_complete:
-                movie["artworks"] = artworks
+            if status == "incomplete_artworks":
                 self.missing_artworks_cache.add(movie)
-                logger.warning(f"\n⚠️ Missing artworks for {title}\n")
-                continue
 
-            logger.info(f"\n✅ All artworks found and updated for movie {title}\n")
+            time.sleep(self.api_call_interval)
 
         last_movie = recently_added_movies[-1]
         self.recently_added_cache.clear(last_movie)
@@ -89,37 +82,40 @@ class ArtworksService:
 
         to_remove = []
         for plex_movie_id, movie in self.missing_artworks_cache.items():
-            title = movie["title"]
-
             if not self.plex_manager.exists(plex_movie_id):
                 to_remove.append(movie)
                 continue
 
-            current_artworks = movie.get("artworks")
-            artworks, release_date = self.artworks_updater.get_artworks(movie)
+            status = self.update_movie_artworks(movie)
+            if status == "success":
+                to_remove.append(movie)
 
-            if artworks == current_artworks:
-                logger.warning(f"\n⚠️ No new artworks for {title}\n")
-                continue
-
-            uploaded = self.artworks_updater.upload_artworks(
-                movie, artworks, release_date
-            )
-            if not uploaded:
-                logger.warning(f"\n⚠️ Failed to upload artworks for {title}\n")
-                continue
-
-            is_complete = self.artworks_updater.is_complete(artworks)
-            if not is_complete:
-                movie["artworks"] = artworks
-                logger.warning(f"\n⚠️ New artworks but not complete for {title}\n")
-                continue
-
-            to_remove.append(movie)
-            logger.info(f"\n✅ All artworks found for {title}\n")
-
-            time.sleep(15.0)
+            time.sleep(self.api_call_interval)
 
         self.missing_artworks_cache.remove_all(to_remove)
 
         logger.info("\nFinished updating missing artworks from Plex\n\n")
+
+    def update_movie_artworks(self, movie: dict) -> str:
+        title = movie["title"]
+
+        current_artworks = movie.get("artworks")
+        artworks, release_date = self.artworks_updater.get_artworks(movie)
+
+        if artworks == current_artworks:
+            logger.warning(f"\n⚠️ No new artworks for {title}\n")
+            return "no_new_artworks"
+
+        uploaded = self.artworks_updater.upload_artworks(movie, artworks, release_date)
+        if not uploaded:
+            logger.warning(f"\n⚠️ Failed to upload artworks for {title}\n")
+            return "upload_failed"
+
+        is_complete = self.artworks_updater.is_complete(artworks)
+        if not is_complete:
+            movie["artworks"] = artworks
+            logger.warning(f"\n⚠️ New artworks but not complete for {title}\n")
+            return "incomplete_artworks"
+
+        logger.info(f"\n✅ All artworks found for {title}\n")
+        return "success"
