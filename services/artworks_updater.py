@@ -30,18 +30,30 @@ class ArtworksUpdater:
         self.update_release_date = update_release_date
         self.api_call_interval = api_call_interval
 
-    def update_artworks(self, movie: dict) -> tuple[bool, dict[str, dict[str, str]]]:
-        logger.info(f"Processing artworks for {movie['title']}")
+    def update_artworks(
+        self, movie: dict
+    ) -> tuple[dict[str, dict[str, str]], bool, bool]:
+        artworks, release_date = self.get_artworks(movie)
+        uploaded = self.upload_artworks(movie, artworks, release_date)
+        is_complete = self.is_complete(artworks)
+
+        return artworks, uploaded, is_complete
+
+    def upload_artworks(
+        self,
+        movie: dict,
+        artworks: dict[str, dict[str, str]],
+        release_date: str | None = None,
+    ) -> bool:
+        logger.info(f"Uploading artworks for {movie['title']}")
 
         plex_movie_id = movie["plex_movie_id"]
         title = movie["title"]
-        artworks, release_date = self.get_artworks(movie)
-
-        is_missing = False
+        uploaded = True
         for artwork_type, artwork in artworks.items():
-            success = self.update_artwork(artwork_type, artwork, plex_movie_id)
+            success = self.upload_artwork(artwork_type, artwork, plex_movie_id)
             self._log_upload_result(success, artwork_type, title, plex_movie_id)
-            is_missing |= self.is_missing(artwork, success)
+            uploaded &= success
             time.sleep(self.api_call_interval)
 
         if self.update_release_date and release_date:
@@ -49,13 +61,13 @@ class ArtworksUpdater:
             movie["itunes_release_date"] = release_date
             self._log_upload_result(success, "release_date", title, plex_movie_id)
 
-        return is_missing, artworks
+        return uploaded
 
-    def update_artwork(
+    def upload_artwork(
         self, artwork_type: str, artwork: dict[str, str], plex_movie_id: int
-    ) -> bool | None:
+    ) -> bool:
         if not artwork:
-            return None
+            return True
 
         elif artwork_type == "poster":
             poster_url = artwork["url"]
@@ -70,21 +82,27 @@ class ArtworksUpdater:
             return self.plex_manager.upload_logo(plex_movie_id, logo_url)
 
         else:
-            return None
+            raise ValueError(
+                f"Invalid artwork type: {artwork_type}. Expected one of: poster, background, logo."
+            )
 
-    def is_missing(
+    def is_complete(
         self,
-        artwork: dict[str, str],
-        upload_success: bool | None,
+        artworks: dict[str, dict[str, str]],
     ) -> bool:
-        if not upload_success:
-            return True
+        if not artworks:
+            return False
 
-        return (
-            artwork["country"] != self.plex_country or artwork.get("source") == "tmdb"
+        return all(
+            artwork
+            and artwork["country"] == self.plex_country
+            and "source" not in artwork
+            for artwork in artworks.values()
         )
 
     def get_artworks(self, movie: dict) -> tuple[dict[str, dict[str, str]], str | None]:
+        logger.info(f"Retrieving artworks for {movie['title']}")
+
         title = movie["title"]
         year = movie["year"]
 
