@@ -51,8 +51,7 @@ class ArtworksUpdater:
         title = movie["title"]
         uploaded = True
         for artwork_type, artwork in artworks.items():
-            success = self.upload_artwork(artwork_type, artwork, plex_movie_id)
-            self._log_upload_result(success, artwork_type, title, plex_movie_id)
+            success = self.upload_artwork(artwork_type, artwork, plex_movie_id, title)
             uploaded &= success
             time.sleep(self.api_call_interval)
 
@@ -64,27 +63,31 @@ class ArtworksUpdater:
         return uploaded
 
     def upload_artwork(
-        self, artwork_type: str, artwork: dict[str, str], plex_movie_id: int
+        self, artwork_type: str, artwork: dict[str, str], plex_movie_id: int, title: str
     ) -> bool:
         if not artwork:
+            logger.warning(f"No {artwork_type} found for {title}: {plex_movie_id}")
             return True
 
         elif artwork_type == "poster":
             poster_url = artwork["url"]
-            return self.plex_manager.upload_poster(plex_movie_id, poster_url)
+            success = self.plex_manager.upload_poster(plex_movie_id, poster_url)
 
         elif artwork_type == "background":
             background_url = artwork["url"]
-            return self.plex_manager.upload_background(plex_movie_id, background_url)
+            success = self.plex_manager.upload_background(plex_movie_id, background_url)
 
         elif artwork_type == "logo":
             logo_url = artwork["url"]
-            return self.plex_manager.upload_logo(plex_movie_id, logo_url)
+            success = self.plex_manager.upload_logo(plex_movie_id, logo_url)
 
         else:
             raise ValueError(
                 f"Invalid artwork type: {artwork_type}. Expected one of: poster, background, logo."
             )
+
+        self._log_upload_result(success, artwork_type, title, plex_movie_id)
+        return success
 
     def is_complete(
         self,
@@ -218,10 +221,6 @@ class ArtworksUpdater:
     def _log_upload_result(
         self, success: bool | None, artwork_type: str, title: str, plex_movie_id: int
     ) -> None:
-        if success is None:
-            logger.warning(f"No {artwork_type} found for {title}: {plex_movie_id}")
-            return
-
         if success:
             logger.info(f"Uploaded {artwork_type} for {title}")
         else:
