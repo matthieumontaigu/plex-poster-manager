@@ -113,36 +113,9 @@ class ArtworksUpdater:
         release_date = None
         for country in self.countries:
 
-            country_title = self.get_country_title(movie, country)
-            if not country_title:
-                continue
-
-            if not artworks.should_handle(country_title):
-                continue
-
-            logger.info(f"Fetching {country.upper()} artworks for {movie['title']}")
-
-            country_artworks = self.metadata_retriever.get_apple_artworks(
-                country_title, movie["director"], year, country
+            country_release_date = self.get_country_artworks(
+                artworks, movie, year, country
             )
-            if country_artworks is None:
-                self._log_missing_artworks(movie, country)
-                continue
-
-            poster_url, background_url, logo_url, country_release_date = (
-                country_artworks
-            )
-            updated = artworks.update("poster", poster_url, country, country_title)
-            self._log_found_artwork(updated, "poster", country_title, country)
-
-            updated = artworks.update(
-                "background", background_url, country, country_title
-            )
-            self._log_found_artwork(updated, "background", country_title, country)
-
-            updated = artworks.update("logo", logo_url, country, country_title)
-            self._log_found_artwork(updated, "logo", country_title, country)
-
             if country == self.plex_country:
                 release_date = country_release_date
 
@@ -154,6 +127,38 @@ class ArtworksUpdater:
         self.match_logo_to_poster(movie, artworks)
 
         return artworks.get(), release_date
+
+    def get_country_artworks(
+        self, artworks: Artworks, movie: dict, year: int, country: str
+    ) -> str | None:
+        country_title = self.get_country_title(movie, country)
+        if not country_title:
+            return None
+
+        if not artworks.should_handle(country_title):
+            return None
+
+        logger.info(f"Fetching {country.upper()} artworks for {movie['title']}")
+
+        country_artworks = self.metadata_retriever.get_apple_artworks(
+            country_title, movie["director"], year, country
+        )
+        if country_artworks is None:
+            self._log_missing_artworks(movie, country)
+            return None
+
+        poster_url, background_url, logo_url, country_release_date = country_artworks
+
+        updated = artworks.update("poster", poster_url, country, country_title)
+        self._log_found_artwork(updated, "poster", country_title, country)
+
+        updated = artworks.update("background", background_url, country, country_title)
+        self._log_found_artwork(updated, "background", country_title, country)
+
+        updated = artworks.update("logo", logo_url, country, country_title)
+        self._log_found_artwork(updated, "logo", country_title, country)
+
+        return country_release_date
 
     def get_country_title(self, movie: dict, country: str) -> str | None:
         if country == self.plex_country:
