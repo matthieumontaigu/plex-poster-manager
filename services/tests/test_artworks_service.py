@@ -27,8 +27,8 @@ class TestArtworksService(unittest.TestCase):
         self.service.recently_added_cache = MagicMock(spec=MoviesCache)
         self.service.missing_artworks_cache = MagicMock(spec=MoviesCache)
 
-    def test_update_recently_added(self):
-
+    @patch("time.sleep", return_value=None)
+    def test_update_recently_added(self, mock_time):
         recently_added_movies = [
             {"title": "Movie 1", "id": 1},
             {"title": "Movie 2", "id": 2},
@@ -36,30 +36,49 @@ class TestArtworksService(unittest.TestCase):
         ]
         self.plex_manager.get_recently_added_movies.return_value = recently_added_movies
 
-        self.artworks_updater.update_artworks.side_effect = [
-            (["artwork1"], True, True),  # Movie 1: All artworks found
-            (["artwork2"], True, False),  # Movie 2: Missing artworks
-            (["artwork3"], False, True),  # Movie 3: Upload failed
+        # Mock artworks_updater methods
+        self.artworks_updater.get_artworks.side_effect = [
+            (["artwork1"], "2025-01-01"),  # Movie 1: All artworks found
+            (["artwork2"], "2025-01-02"),  # Movie 2: Missing artworks
+            (["artwork3"], "2025-01-03"),  # Movie 3: Upload failed
         ]
+        self.artworks_updater.upload_artworks.side_effect = [True, True, False]
+        self.artworks_updater.is_complete.side_effect = [True, False, False]
 
         self.service.update_recently_added()
 
-        # Get recently added movies
+        # Ensure recently added movies are fetched
         self.plex_manager.get_recently_added_movies.assert_called_once()
 
-        # Update artworks for each movie
-        self.artworks_updater.update_artworks.assert_any_call(recently_added_movies[0])
-        self.artworks_updater.update_artworks.assert_any_call(recently_added_movies[1])
-        self.artworks_updater.update_artworks.assert_any_call(recently_added_movies[2])
+        # Ensure get_artworks is called for each movie
+        self.artworks_updater.get_artworks.assert_any_call(recently_added_movies[0])
+        self.artworks_updater.get_artworks.assert_any_call(recently_added_movies[1])
+        self.artworks_updater.get_artworks.assert_any_call(recently_added_movies[2])
 
-        # Add successful movies to recently_added_cache
+        # Ensure upload_artworks is called for each movie
+        self.artworks_updater.upload_artworks.assert_any_call(
+            recently_added_movies[0], ["artwork1"], "2025-01-01"
+        )
+        self.artworks_updater.upload_artworks.assert_any_call(
+            recently_added_movies[1], ["artwork2"], "2025-01-02"
+        )
+        self.artworks_updater.upload_artworks.assert_any_call(
+            recently_added_movies[2], ["artwork3"], "2025-01-03"
+        )
+
+        # Ensure is_complete is called for each movie
+        self.artworks_updater.is_complete.assert_any_call(["artwork1"])
+        self.artworks_updater.is_complete.assert_any_call(["artwork2"])
+
+        # Ensure successful movies are added to recently_added_cache
         self.service.recently_added_cache.add.assert_any_call(recently_added_movies[0])
         self.service.recently_added_cache.add.assert_any_call(recently_added_movies[1])
 
-        # Add missing artworks to missing_artworks_cache
+        # Ensure movies with incomplete artworks are added to missing_artworks_cache
         self.service.missing_artworks_cache.add.assert_called_once_with(
-            {"title": "Movie 2", "id": 2, "artworks": ["artwork2"]}
+            recently_added_movies[1]
         )
+
         self.service.recently_added_cache.clear.assert_called_once_with(
             recently_added_movies[-1]
         )
