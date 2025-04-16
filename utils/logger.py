@@ -32,6 +32,7 @@ def setup_logging(log_path: str | None = None) -> None:
             file_path, when="midnight", interval=1, backupCount=7
         )
         file_handler.suffix = "%Y-%m-%d"
+        file_handler.namer = lambda name: name + ".log"
         formatter = logging.Formatter(record)
         file_handler.setFormatter(formatter)
         logger.addHandler(file_handler)
