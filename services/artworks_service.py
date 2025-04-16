@@ -58,19 +58,27 @@ class ArtworksService:
 
         recently_added_movies = self.plex_manager.get_recently_added_movies()
         for movie in recently_added_movies:
+            title = movie["title"]
+
             if movie in self.recently_added_cache:
                 continue
 
-            is_missing, artworks = self.artworks_updater.update_artworks(movie)
-
-            if is_missing:
-                movie["artworks"] = artworks
-                self.missing_artworks_cache.add(movie)
-                logger.warning(f"\n❌ Missing artworks detected for {movie['title']}\n")
-            else:
-                logger.info(f"\n✅ Updated artworks for movie {movie['title']}\n")
+            artworks, uploaded, is_complete = self.artworks_updater.update_artworks(
+                movie
+            )
+            if not uploaded:
+                logger.warning(f"\n⚠️ Failed to upload artworks for {title}\n")
+                continue
 
             self.recently_added_cache.add(movie)
+
+            if not is_complete:
+                movie["artworks"] = artworks
+                self.missing_artworks_cache.add(movie)
+                logger.warning(f"\n⚠️ Missing artworks for {title}\n")
+                continue
+
+            logger.info(f"\n✅ All artworks found and updated for movie {title}\n")
 
         last_movie = recently_added_movies[-1]
         self.recently_added_cache.clear(last_movie)
@@ -81,22 +89,36 @@ class ArtworksService:
 
         to_remove = []
         for plex_movie_id, movie in self.missing_artworks_cache.items():
+            title = movie["title"]
 
             if not self.plex_manager.exists(plex_movie_id):
                 to_remove.append(movie)
                 continue
 
-            is_missing, artworks = self.artworks_updater.update_artworks(movie)
-            if is_missing:
-                movie["artworks"] = artworks
-                logger.warning(
-                    f"\n⚠️ Artworks still not complete for {movie['title']}\n"
-                )
-            else:
-                to_remove.append(movie)
-                logger.info(f"\n✅ All artworks found for {movie['title']}\n")
+            current_artworks = movie.get("artworks")
+            artworks, release_date = self.artworks_updater.get_artworks(movie)
 
-            time.sleep(10.0)
+            if artworks == current_artworks:
+                logger.warning(f"\n⚠️ No new artworks for {title}\n")
+                continue
+
+            uploaded = self.artworks_updater.upload_artworks(
+                movie, artworks, release_date
+            )
+            if not uploaded:
+                logger.warning(f"\n⚠️ Failed to upload artworks for {title}\n")
+                continue
+
+            is_complete = self.artworks_updater.is_complete(artworks)
+            if not is_complete:
+                movie["artworks"] = artworks
+                logger.warning(f"\n⚠️ New artworks but not complete for {title}\n")
+                continue
+
+            to_remove.append(movie)
+            logger.info(f"\n✅ All artworks found for {title}\n")
+
+            time.sleep(15.0)
 
         self.missing_artworks_cache.remove_all(to_remove)
 
