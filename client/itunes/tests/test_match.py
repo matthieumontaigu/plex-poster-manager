@@ -578,6 +578,31 @@ class TestGetMatchingMovie(unittest.TestCase):
         expected_result = {}
         self.assertEqual(result, expected_result)
 
+    def test_get_matching_movie_same_title_no_director(self):
+        candidates = [
+            {
+                "trackName": "Arnaque à la carte",
+                "artistName": "Unknown",
+                "releaseDate": "2013-08-25T07:00:00Z",
+            },
+            {
+                "trackName": "Arnaque à la carte (Identity Thief)",
+                "artistName": "Seth Gordon",
+                "releaseDate": "2013-02-08T08:00:00Z",
+            },
+        ]
+        title = "Arnaque à la carte"
+        directors = ["Seth Gordon"]
+        year = 2013
+
+        result = get_matching_movie(candidates, title, directors, year)
+        expected_result = {
+            "trackName": "Arnaque à la carte",
+            "artistName": "Unknown",
+            "releaseDate": "2013-08-25T07:00:00Z",
+        }
+        self.assertEqual(result, expected_result)
+
 
 if __name__ == "__main__":
     unittest.main()
