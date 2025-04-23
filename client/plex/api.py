@@ -21,7 +21,7 @@ class PlexAPIRequester:
 
     def get_recently_added_movies(self) -> Response | None:
         """Get recently added movies."""
-        endpoint = f"library/recentlyAdded"
+        endpoint = f"library/sections/6/recentlyAdded"
         params = {"type": 1}
 
         response = self.get(endpoint, params)
