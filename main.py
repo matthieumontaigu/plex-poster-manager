@@ -30,6 +30,7 @@ if __name__ == "__main__":
     update_release_date = artworks_config["update_release_date"]
     recent_update_interval = artworks_config["recent_update_interval"]
     missing_artwork_interval = artworks_config["missing_artwork_interval"]
+    artworks_api_interval = artworks_config["artworks_api_interval"]
 
     storage_config = config["storage"]
     cache_path = storage_config["cache_path"]
@@ -46,6 +47,7 @@ if __name__ == "__main__":
         match_title=match_title,
         match_logo=match_logo,
         update_release_date=update_release_date,
+        api_call_interval=artworks_api_interval / 6,
     )
     artworks_service = ArtworksService(
         artworks_updater,
@@ -53,5 +55,6 @@ if __name__ == "__main__":
         recent_update_interval,
         missing_artwork_interval,
         cache_path,
+        api_call_interval=artworks_api_interval,
     )
     artworks_service.start()

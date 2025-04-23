@@ -16,6 +16,7 @@ class ArtworksService:
         recent_update_interval: int,
         missing_artwork_interval: int,
         cache_path: str,
+        api_call_interval: float = 1.0,
     ) -> None:
         self.artworks_updater = artworks_updater
         self.plex_manager = plex_manager
@@ -24,7 +25,7 @@ class ArtworksService:
         self.missing_artwork_interval = missing_artwork_interval
         self.last_recent_update = 0.0
         self.last_missing_artwork_update = 0.0
-        self.api_call_interval = 15.0
+        self.api_call_interval = api_call_interval
 
         self.recently_added_cache = MoviesCache(cache_path, "recently_added")
         self.missing_artworks_cache = MoviesCache(cache_path, "missing_artworks")
@@ -33,6 +34,7 @@ class ArtworksService:
         self.sleep_duration = min(recent_update_interval, missing_artwork_interval)
 
     def start(self) -> None:
+        logger.info("Starting ArtworksService...")
         self.running = True
         while self.running:
             try:
