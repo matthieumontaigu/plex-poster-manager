@@ -93,8 +93,13 @@ class TestArtworksService(unittest.TestCase):
         self.artworks_updater.is_complete.assert_any_call(["artwork2"])
 
         # Ensure successful movies are added to recently_added_cache
-        self.service.recently_added_cache.add.assert_any_call(recently_added_movies[0])
-        self.service.recently_added_cache.add.assert_any_call(recently_added_movies[1])
+        calls = [
+            call[0][0] for call in self.service.recently_added_cache.add.call_args_list
+        ]
+        self.assertIn(recently_added_movies[0], calls)
+        self.assertIn(recently_added_movies[1], calls)
+        self.assertNotIn(recently_added_movies[2], calls)
+        self.assertNotIn(recently_added_movies[3], calls)
 
         # Ensure movies with incomplete artworks are added to missing_artworks_cache
         self.service.missing_artworks_cache.add.assert_called_once_with(

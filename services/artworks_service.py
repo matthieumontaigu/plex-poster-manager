@@ -67,7 +67,9 @@ class ArtworksService:
 
             tmdb_id = self.plex_manager.get_tmdb_id(movie["plex_movie_id"])
             if not tmdb_id:
-                logger.warning(f"\nMovie {movie['title']} is not matched.\n")
+                logger.warning(
+                    f"\nMovie {movie['title']} is not matched, will be ignored.\n"
+                )
                 continue
 
             status = self.update_movie_artworks(movie)
