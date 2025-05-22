@@ -24,10 +24,12 @@ class MetadataRetriever:
             "es": "es",
         }
 
-    def get_localized_title(self, movie_id: int, country: str) -> str | None:
+    def get_localized_title(self, movie_id: int | None, country: str) -> str | None:
         """Fetch the localized title for a movie based on the country."""
         if country not in self.country_languages:
             raise ValueError(f"Unsupported country code: {country}")
+        if not movie_id:
+            return None
         return self.get_movie_title(movie_id, self.country_languages[country])
 
     def get_movie_title(self, movie_id: int, language: str) -> str | None:
@@ -35,8 +37,10 @@ class MetadataRetriever:
         title = self.tmdb_api_requester.get_movie_title(movie_id, language)
         return title
 
-    def get_tmdb_logo_url(self, movie_id: int, language: str) -> str | None:
+    def get_tmdb_logo_url(self, movie_id: int | None, language: str) -> str | None:
         """Fetch the movie logo by its ID."""
+        if not movie_id:
+            return None
         return self.tmdb_api_requester.get_movie_logo_url(movie_id, language)
 
     def get_apple_artworks(
