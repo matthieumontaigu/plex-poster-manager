@@ -30,11 +30,19 @@ class TestArtworksService(unittest.TestCase):
     @patch("time.sleep", return_value=None)
     def test_update_recently_added(self, mock_time):
         recently_added_movies = [
-            {"title": "Movie 1", "id": 1},
-            {"title": "Movie 2", "id": 2},
-            {"title": "Movie 3", "id": 3},
+            {"title": "Movie 1", "plex_movie_id": 1},
+            {"title": "Movie 2", "plex_movie_id": 2},
+            {"title": "Movie 3", "plex_movie_id": 3},
+            {"title": "Movie 3", "plex_movie_id": 4},
         ]
         self.plex_manager.get_recently_added_movies.return_value = recently_added_movies
+
+        self.plex_manager.get_tmdb_id.side_effect = [
+            "1111",
+            "2222",
+            "3333",
+            None,  # Movie 4 will be ignored because not matched
+        ]
 
         # Mock artworks_updater methods
         self.artworks_updater.get_artworks.side_effect = [
@@ -49,6 +57,20 @@ class TestArtworksService(unittest.TestCase):
 
         # Ensure recently added movies are fetched
         self.plex_manager.get_recently_added_movies.assert_called_once()
+
+        # Ensure get_tmdb_id is called for each movie
+        self.plex_manager.get_tmdb_id.assert_any_call(
+            recently_added_movies[0]["plex_movie_id"]
+        )
+        self.plex_manager.get_tmdb_id.assert_any_call(
+            recently_added_movies[1]["plex_movie_id"]
+        )
+        self.plex_manager.get_tmdb_id.assert_any_call(
+            recently_added_movies[2]["plex_movie_id"]
+        )
+        self.plex_manager.get_tmdb_id.assert_any_call(
+            recently_added_movies[3]["plex_movie_id"]
+        )
 
         # Ensure get_artworks is called for each movie
         self.artworks_updater.get_artworks.assert_any_call(recently_added_movies[0])

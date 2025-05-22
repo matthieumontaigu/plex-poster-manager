@@ -65,6 +65,11 @@ class ArtworksService:
             if movie in self.recently_added_cache:
                 continue
 
+            tmdb_id = self.plex_manager.get_tmdb_id(movie["plex_movie_id"])
+            if not tmdb_id:
+                logger.warning(f"\nMovie {movie['title']} is not matched.\n")
+                continue
+
             status = self.update_movie_artworks(movie)
 
             if status in ("success", "incomplete_artworks"):
