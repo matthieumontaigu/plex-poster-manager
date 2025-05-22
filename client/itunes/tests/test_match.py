@@ -603,6 +603,22 @@ class TestGetMatchingMovie(unittest.TestCase):
         }
         self.assertEqual(result, expected_result)
 
+    def test_get_matching_movie_sequel_title_same_director(self):
+        candidates = [
+            {
+                "trackName": "L'ombre d'Emily",
+                "artistName": "Paul Feig",
+                "releaseDate": "2018-09-26T07:00:00Z",
+            }
+        ]
+        title = "L'ombre d'Emily 2"
+        directors = ["Paul Feig"]
+        year = 2025
+
+        result = get_matching_movie(candidates, title, directors, year)
+        expected_result = {}
+        self.assertEqual(result, expected_result)
+
 
 if __name__ == "__main__":
     unittest.main()

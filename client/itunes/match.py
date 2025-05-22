@@ -27,7 +27,7 @@ def compute_match_score(
     score = 0.0
     same_title = is_title_match(title, get_title(candidate))
     director_score = get_director_score(directors, get_director(candidate))
-    same_year = is_year_match(year, get_year(candidate))
+    year_score = get_year_score(year, get_year(candidate))
 
     if same_title:
         score += TITLE_WEIGHT
@@ -35,8 +35,8 @@ def compute_match_score(
     if director_score:
         score += director_score * DIRECTOR_WEIGHT
 
-    if same_year:
-        score += YEAR_WEIGHT
+    if year_score:
+        score += year_score * YEAR_WEIGHT
 
     return score
 
@@ -66,8 +66,12 @@ def get_director_score(directors: list[str], candidate_director: str) -> float:
     return -1.0 if similarity < 0.5 else 0.0
 
 
-def is_year_match(
+def get_year_score(
     year: int,
     candidate_year: int,
-) -> bool:
-    return year <= candidate_year <= year + 1
+) -> float:
+    if year <= candidate_year <= year + 1:
+        return 1.0
+    if candidate_year < year - 2 or candidate_year > year + 2:
+        return -1.0
+    return 0.0
