@@ -1,6 +1,7 @@
 import logging
 
 import requests
+from plotly import data
 from requests import Response
 
 logger = logging.getLogger(__name__)
@@ -30,6 +31,13 @@ class PlexAPIRequester:
     def get_metadata(self, movie_id: int) -> Response | None:
         """Get metadata for a specific movie."""
         endpoint = f"library/metadata/{movie_id}"
+
+        response = self.get(endpoint, {})
+        return response
+
+    def get_logos(self, movie_id: int) -> Response | None:
+        """Get logos for a specific movie."""
+        endpoint = f"library/metadata/{movie_id}/clearLogos"
 
         response = self.get(endpoint, {})
         return response
@@ -64,6 +72,17 @@ class PlexAPIRequester:
             return False
         return response.status_code == 200
 
+    def upload_logo_file(self, movie_id: int, logo_file_path: str) -> bool:
+        """Upload a logo for a movie."""
+        endpoint = f"library/metadata/{movie_id}/clearLogos"
+        with open(logo_file_path, "rb") as f:
+            logo_data = f.read()
+
+        response = self.post(endpoint, data=logo_data)
+        if response is None:
+            return False
+        return response.status_code == 200
+
     def update_release_date(self, movie_id: int, release_date: str) -> bool:
         """Update the release date for a movie."""
         endpoint = f"library/metadata/{movie_id}"
@@ -86,10 +105,12 @@ class PlexAPIRequester:
             logger.error(f"{e}")
             return None
 
-    def post(self, endpoint: str, params: dict) -> Response | None:
+    def post(
+        self, endpoint: str, params: dict | None = None, **kwargs
+    ) -> Response | None:
         url = f"{self.api_url}/{endpoint}"
         try:
-            response = requests.post(url, headers=self.headers, params=params)
+            response = requests.post(url, headers=self.headers, params=params, **kwargs)
             response.raise_for_status()
             return response
         except requests.exceptions.HTTPError as e:
