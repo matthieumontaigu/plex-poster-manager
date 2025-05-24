@@ -1,14 +1,16 @@
+import hashlib
 import logging
 
 from client.plex.api import PlexAPIRequester
-from client.plex.parser import get_movie_attributes, get_movies
+from client.plex.parser import get_movie_attributes, get_movies, get_photos
 
 logger = logging.getLogger(__name__)
 
 
 class PlexManager:
-    def __init__(self, plex_url: str, plex_token: str) -> None:
+    def __init__(self, plex_url: str, plex_token: str, metadata_path: str = "") -> None:
         self.api_requester = PlexAPIRequester(plex_url, plex_token)
+        self.metadata_path = metadata_path
 
     def get_all_movies(self) -> list[dict[str, str | int | None]]:
         api_response = self.api_requester.get_all_movies()
@@ -33,6 +35,9 @@ class PlexManager:
     def upload_logo(self, movie_id: int, logo_url: str) -> bool:
         return self.api_requester.upload_logo(movie_id, logo_url)
 
+    def upload_logo_file(self, movie_id: int, logo_file_path: str) -> bool:
+        return self.api_requester.upload_logo_file(movie_id, logo_file_path)
+
     def update_release_date(self, movie_id: int, release_date: str) -> bool:
         return self.api_requester.update_release_date(movie_id, release_date)
 
@@ -54,3 +59,50 @@ class PlexManager:
     def get_tmdb_id(self, movie_id: int) -> str | None:
         metadata = self.get_metadata(movie_id)
         return metadata.get("tmdb_id")
+
+    def get_plex_guid(self, movie_id: int) -> str | None:
+        metadata = self.get_metadata(movie_id)
+        return metadata.get("guid")
+
+    def get_bundle_id(self, movie_id: int) -> str | None:
+        plex_guid = self.get_plex_guid(movie_id)
+        if not plex_guid:
+            return None
+        bundle_hash = hashlib.sha1(plex_guid.encode("utf-8")).hexdigest()
+        return bundle_hash
+
+    def get_movie_bundle_path(self, movie_id: int) -> str:
+        bundle_id = self.get_bundle_id(movie_id)
+        if not bundle_id:
+            return ""
+        subfolder = bundle_id[0]
+        bundle_folder = bundle_id[1:]
+        return f"{self.metadata_path}/Movies/{subfolder}/{bundle_folder}.bundle"
+
+    def get_logos(self, movie_id: int) -> list[dict[str, str | None]]:
+        api_response = self.api_requester.get_logos(movie_id)
+        if api_response is None:
+            return []
+        return get_photos(api_response)
+
+    def get_movie_image_path(self, key: str) -> str:
+        """
+        Get the full path to an image based on its key.
+        :param key: The key of the image.
+        /library/metadata/55579/file?url=metadata://clearLogos/tv.plex.agents.movie_496540d6360cbcdd5aaa8f073958ab2627fad632
+        /library/metadata/55579/file?url=upload://clearLogos/05dc99b9805c5fa3a8915b5421879394a94b0904
+        :return: The full path to the image.
+        """
+        movie_id = int(key.split("/")[3])
+        bundle_path = self.get_movie_bundle_path(movie_id)
+
+        url = key.split("url=")[-1]
+        if url.startswith("metadata://"):
+            middle_path = "Contents/_combined"
+        elif url.startswith("upload://"):
+            middle_path = "Uploads"
+        else:
+            return ""
+
+        image_path = url.split("://")[-1]
+        return f"{bundle_path}/{middle_path}/{image_path}"
