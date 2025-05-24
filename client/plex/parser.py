@@ -1,3 +1,4 @@
+import urllib.parse
 import xml.etree.ElementTree as ET
 from xml.etree.ElementTree import Element
 
@@ -51,6 +52,7 @@ def _get_movie_attributes(movie: Element) -> dict[str, str | int | list[str] | N
         "added_date": added_date,
         "release_date": movie.attrib.get("originallyAvailableAt"),
         "director": get_directors(movie),
+        "guid": movie.get("guid"),
     }
     tmdb_id = get_tmdb_id(movie)
     if tmdb_id:
@@ -83,3 +85,22 @@ def get_tmdb_id(movie: Element) -> str | None:
             return id.split("://")[-1]
 
     return None
+
+
+def get_photos(api_response: Response) -> list[dict[str, str]]:
+    """
+    Extract photo URLs from the XML element.
+    :param photos: The XML element containing photo information.
+    :return: A list of photo URLs.
+    """
+    root = parse_xml(api_response)
+    photos = []
+
+    for photo in root.findall("Photo"):
+        entry = {}
+        for attr, value in photo.attrib.items():
+            # Decode URL-encoded values
+            entry[attr] = urllib.parse.unquote(value)
+        photos.append(entry)
+
+    return photos
