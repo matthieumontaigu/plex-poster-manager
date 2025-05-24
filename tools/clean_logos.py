@@ -1,7 +1,9 @@
+import argparse
 import logging
 import time
 
 from client.plex.manager import PlexManager
+from utils.file_utils import load_json_file
 
 logger = logging.getLogger(__name__)
 
@@ -87,3 +89,34 @@ def analyze_logos(logos: list[dict[str, str | None]]) -> tuple[bool, int]:
             nb_uploaded_logos += 1
 
     return agent_logo_selected, nb_uploaded_logos
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Batch revert logos for Plex movies.")
+    parser.add_argument(
+        "--config-path",
+        required=True,
+        help="Path to the JSON file containing config",
+    )
+    args = parser.parse_args()
+    config_path = args.config_path
+    config = load_json_file(config_path)
+
+    credentials = config["credentials"]
+    plex_url = credentials["plex_url"]
+    plex_token = credentials["plex_token"]
+
+    plex_manager = PlexManager(plex_url, plex_token)
+
+    all_movies = plex_manager.get_all_movies()
+    all_movies_sorted = sorted(
+        all_movies, key=lambda movie: movie["added_date"], reverse=True
+    )
+
+    all_movies_subset = all_movies_sorted[100:]
+
+    batch_revert_logos(plex_manager, all_movies_subset)
+
+
+if __name__ == "__main__":
+    main()
