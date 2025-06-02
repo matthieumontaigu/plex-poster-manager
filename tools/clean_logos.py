@@ -105,8 +105,10 @@ def main():
     credentials = config["credentials"]
     plex_url = credentials["plex_url"]
     plex_token = credentials["plex_token"]
+    storage = config["storage"]
+    metadata_path = storage["metadata_path"]
 
-    plex_manager = PlexManager(plex_url, plex_token)
+    plex_manager = PlexManager(plex_url, plex_token, metadata_path)
 
     all_movies = plex_manager.get_all_movies()
     all_movies_sorted = sorted(
