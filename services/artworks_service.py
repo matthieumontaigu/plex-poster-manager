@@ -27,7 +27,9 @@ class ArtworksService:
         self.last_missing_artwork_update = 0.0
         self.api_call_interval = api_call_interval
 
-        self.recently_added_cache = MoviesCache(cache_path, "recently_added")
+        self.recently_added_cache = MoviesCache(
+            cache_path, "recently_added", retention_seconds=3600 * 24 * 7
+        )  # 1 week retention
         self.missing_artworks_cache = MoviesCache(cache_path, "missing_artworks")
 
         self.running = False
