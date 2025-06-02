@@ -4,9 +4,10 @@ from storage.cache import Cache
 
 
 class MoviesCache:
-    def __init__(self, path: str, filename: str) -> None:
+    def __init__(self, path: str, filename: str, retention_seconds: int = 0) -> None:
         self.cache = Cache(path, filename)
         self.updated = False
+        self.retention_seconds = retention_seconds
 
     def add(self, movie: dict) -> None:
         key = self.get_key(movie)
@@ -27,7 +28,9 @@ class MoviesCache:
     def clear(self, movie: dict) -> None:
         threshold = movie["added_date"]
         keys_before = [
-            key for key in self.cache if self.cache.get(key)["added_date"] < threshold
+            key
+            for key in self.cache
+            if self.cache.get(key)["added_date"] < threshold - self.retention_seconds
         ]
         for key in keys_before:
             self.cache.remove(key)
