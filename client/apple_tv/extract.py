@@ -19,33 +19,21 @@ def get_apple_tv_artworks(url: str) -> tuple[str | None, str | None]:
 
 
 def get_logo_url(page: BeautifulSoup) -> str | None:
-    pictures = page.find_all("picture")
-    logo_picture = None
-    for picture in pictures:
-        img = picture.find("img", class_="product-header__image-logo__image")
-        if img:
-            logo_picture = picture
-            break
+    pictures = page.find_all("picture", class_="svelte-1fyueul")
 
-    if not logo_picture:
+    if not pictures:
         return None
 
-    return get_image_url(logo_picture, "2400x900", "png")
+    return get_image_url(pictures[0], "2400x900", "png")
 
 
 def get_background_url(page: BeautifulSoup) -> str | None:
-    pictures = page.find_all("picture")
-    background_picture = None
-    for picture in pictures:
-        img = picture.find("img", class_="product-header__image-bg")
-        if img:
-            background_picture = picture
-            break
+    pictures = page.find_all("picture", class_="svelte-10tj07c")
 
-    if not background_picture:
+    if not pictures:
         return None
 
-    return get_image_url(background_picture, "4320x3240", "jpg")
+    return get_image_url(pictures[0], "4320x3240", "jpg")
 
 
 def get_image_url(picture: BeautifulSoup, size: str, extension: str) -> str | None:
@@ -60,10 +48,11 @@ def get_image_url(picture: BeautifulSoup, size: str, extension: str) -> str | No
 
     image_url = srcset.split(", ")[0].split(" ")[0]
     target_size = f"{size}.{extension}"
+    print(image_url)
     return get_resized_image_url(image_url, target_size)
 
 
 def get_resized_image_url(url: str, size: str) -> str:
     """Example: size = 3840x2160.jpg"""
     extension = size.split(".")[-1]
-    return re.sub(r"[\w]+x[\w]+\.{}$".format(extension), size, url)
+    return re.sub(r"[\w]+x[\w]+\-?[\d]+\.{}$".format(extension), size, url)
