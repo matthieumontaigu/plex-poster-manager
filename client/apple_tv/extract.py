@@ -48,7 +48,6 @@ def get_image_url(picture: BeautifulSoup, size: str, extension: str) -> str | No
 
     image_url = srcset.split(", ")[0].split(" ")[0]
     target_size = f"{size}.{extension}"
-    print(image_url)
     return get_resized_image_url(image_url, target_size)
 
 
