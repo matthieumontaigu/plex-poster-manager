@@ -1,7 +1,6 @@
 import logging
 
 import requests
-from plotly import data
 from requests import Response
 
 logger = logging.getLogger(__name__)
