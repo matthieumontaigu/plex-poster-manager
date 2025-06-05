@@ -619,6 +619,113 @@ class TestGetMatchingMovie(unittest.TestCase):
         expected_result = {}
         self.assertEqual(result, expected_result)
 
+    def test_get_matching_movie_maria(self):
+        candidates = [
+            {
+                "trackName": "Maria (2024)",
+                "artistName": "Jessica Palud",
+                "releaseDate": "2024-06-19T07:00:00Z",
+            },
+            {
+                "trackName": "Marie Stuart, Reine d'Écosse (2018)",
+                "artistName": "Josie Rourke",
+                "releaseDate": "2018-12-07T08:00:00Z",
+            },
+            {
+                "trackName": "Marie Madeleine (Mary Magdalene)",
+                "artistName": "Garth Davis",
+                "releaseDate": "2018-03-15T07:00:00Z",
+            },
+            {
+                "trackName": "Le Parrain de Mario Puzo, épilogue : la mort de Michael Corleone",
+                "artistName": "Francis Ford Coppola",
+                "releaseDate": "2020-12-07T08:00:00Z",
+            },
+            {
+                "trackName": "Maria rêve",
+                "artistName": "Lauriane Escaffre & Yvo Muller",
+                "releaseDate": "2022-09-28T07:00:00Z",
+            },
+            {
+                "trackName": "Maria by Callas",
+                "artistName": "Tom Volf",
+                "releaseDate": "2017-12-13T08:00:00Z",
+            },
+            {
+                "trackName": "Le mariage de Maria Braun (VOST)",
+                "artistName": "Rainer Werner Fassbinder",
+                "releaseDate": "1979-05-22T07:00:00Z",
+            },
+            {
+                "trackName": "Viva Maria !",
+                "artistName": "Louis Malle",
+                "releaseDate": "1965-11-22T08:00:00Z",
+            },
+            {
+                "trackName": "Ace High",
+                "artistName": "Giuseppe Colizzi",
+                "releaseDate": "1969-01-01T08:00:00Z",
+            },
+            {
+                "trackName": "Maria",
+                "artistName": "Alec Pronovost",
+                "releaseDate": "2021-08-20T07:00:00Z",
+            },
+            {
+                "trackName": "Alias Maria",
+                "artistName": "José Luis Rugeles Gracia",
+                "releaseDate": "2016-03-09T08:00:00Z",
+            },
+            {
+                "trackName": "Maria montessori",
+                "artistName": "Gianluca Maria Tavarelli",
+                "releaseDate": "2008-08-20T07:00:00Z",
+            },
+            {
+                "trackName": "Terre de Marie",
+                "artistName": "Juan Manuel Cotelo",
+                "releaseDate": "2021-03-01T08:00:00Z",
+            },
+            {
+                "trackName": "Maria Chapdelaine",
+                "artistName": "Gilles Carle",
+                "releaseDate": "1986-04-01T08:00:00Z",
+            },
+            {
+                "trackName": "Sils Maria",
+                "artistName": "Olivier Assayas",
+                "releaseDate": "2014-08-20T07:00:00Z",
+            },
+            {
+                "trackName": "Golda maria",
+                "artistName": "Unknown",
+                "releaseDate": "2022-02-09T08:00:00Z",
+            },
+            {
+                "trackName": "Marina Kaye: Live à l'Olympia 2016",
+                "artistName": "Marina Kaye",
+                "releaseDate": "2016-12-09T08:00:00Z",
+            },
+            {
+                "trackName": "Maria Stuarda",
+                "artistName": "Unknown",
+                "releaseDate": "2013-01-19T08:00:00Z",
+            },
+            {
+                "trackName": "Ave Maria (1984)",
+                "artistName": "Jacques Richard",
+                "releaseDate": "1984-10-31T08:00:00Z",
+            },
+        ]
+
+        title = "Maria"
+        directors = ["Pablo Larraín"]
+        year = 2025
+
+        result = get_matching_movie(candidates, title, directors, year)
+        expected_result = {}
+        self.assertEqual(result, expected_result)
+
 
 if __name__ == "__main__":
     unittest.main()
