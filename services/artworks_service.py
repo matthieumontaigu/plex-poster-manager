@@ -47,6 +47,7 @@ class ArtworksService:
 
     def handle(self) -> None:
         now = time.time()
+        self.missing_artworks_cache.load()
 
         if now - self.last_recent_update >= self.recent_update_interval:
             self.update_recently_added()

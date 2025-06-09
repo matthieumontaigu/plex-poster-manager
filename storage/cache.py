@@ -6,12 +6,12 @@ from utils.file_utils import load_json_file, save_json_file
 
 class Cache:
     def __init__(self, path: str, filename: str) -> None:
-        self.filepath = Path(path) / f"{filename}.json"
+        self.filepath = str(Path(path) / f"{filename}.json")
         self.data: dict = {}
         self.load()
 
     def load(self) -> None:
-        if self.filepath.exists():
+        if Path(self.filepath).exists():
             self.data = load_json_file(self.filepath)
         else:
             self.data = {}
