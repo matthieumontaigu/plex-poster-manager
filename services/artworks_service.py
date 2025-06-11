@@ -58,6 +58,7 @@ class ArtworksService:
             self.last_missing_artwork_update = now
 
         self.recently_added_cache.save()
+        # Only save if a movie has been added or removed, not if artworks have been updated
         self.missing_artworks_cache.save()
 
     def update_recently_added(self) -> None:
