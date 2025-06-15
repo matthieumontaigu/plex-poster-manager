@@ -19,7 +19,9 @@ def get_apple_tv_artworks(url: str) -> tuple[str | None, str | None]:
 
 
 def get_logo_url(page: BeautifulSoup) -> str | None:
-    pictures = page.find_all("picture", class_="svelte-1fyueul")
+    """Logo is first picture with class starting with "picture" """
+    pattern = re.compile(r"^picture")
+    pictures = page.find_all("picture", class_=pattern)
 
     if not pictures:
         return None
@@ -28,7 +30,9 @@ def get_logo_url(page: BeautifulSoup) -> str | None:
 
 
 def get_background_url(page: BeautifulSoup) -> str | None:
-    pictures = page.find_all("picture", class_="svelte-10tj07c")
+    """Background is first picture with class starting with "svelte" """
+    pattern = re.compile(r"^svelte")
+    pictures = page.find_all("picture", class_=pattern)
 
     if not pictures:
         return None
