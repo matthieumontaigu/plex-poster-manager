@@ -726,6 +726,23 @@ class TestGetMatchingMovie(unittest.TestCase):
         expected_result = {}
         self.assertEqual(result, expected_result)
 
+    def test_get_matching_movie_looney_tunes(self):
+        candidates = [
+            {
+                "trackName": "Daffy et Porky sauvent le monde",
+                "artistName": "Pete Browngardt",
+                "releaseDate": "2024-08-01T07:00:00Z",
+            }
+        ]
+
+        title = "Looney Tunes : Daffy et Porky sauvent le monde"
+        directors = ["Peter Browngardt"]
+        year = 2024
+
+        result = get_matching_movie(candidates, title, directors, year)
+        expected_result = {}
+        self.assertEqual(result, expected_result)
+
 
 if __name__ == "__main__":
     unittest.main()
