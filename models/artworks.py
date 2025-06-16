@@ -26,7 +26,7 @@ class Artworks:
     def update(
         self,
         key: str,
-        url: str,
+        url: str | None,
         country: str,
         title: str,
         source: str = "",

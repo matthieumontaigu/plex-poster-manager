@@ -168,6 +168,14 @@ class ArtworksUpdater:
         return self.metadata_retriever.get_localized_title(tmdb_id, country)
 
     def match_logo_to_poster(self, movie: dict, artworks: Artworks) -> None:
+        """
+        Match logo to poster if poster is in the same country as the plex server.
+        This is useful for countries where the logo is not available in the Apple API.
+        Exceptions:
+        - If the logo is already set and matches the poster, the logo will not be updated.
+        - If the poster is not in the same country as the plex server, the logo will not be updated.
+        - If the logo cannot be matched to the poster (e.g. not found in TMDB), the logo will not be updated.
+        """
         if not self.match_logo:
             return
 
@@ -189,6 +197,7 @@ class ArtworksUpdater:
             "tmdb",
             override=True,
         )
+
         self._log_found_artwork(
             updated, "logo", movie["title"], self.plex_country, "tmdb"
         )
@@ -200,8 +209,13 @@ class ArtworksUpdater:
         if not tmdb_id:
             return None
 
-        movie["tmdb_id"] = tmdb_id
-        return tmdb_id
+        try:
+            tmdb_id_int = int(tmdb_id)
+        except (TypeError, ValueError):
+            return None
+
+        movie["tmdb_id"] = tmdb_id_int
+        return tmdb_id_int
 
     def _log_missing_artworks(self, movie: dict, country: str) -> None:
         title = movie["title"]
