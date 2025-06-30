@@ -25,6 +25,10 @@ def normalize(s: str) -> str:
     return remove_punctuation(remove_accents(s)).lower().strip()
 
 
+def soft_normalize(s: str) -> str:
+    return remove_special_characters(s.lower())
+
+
 def remove_punctuation(s: str) -> str:
     return (
         s.translate(str.maketrans("", "", punctuation))
@@ -33,6 +37,10 @@ def remove_punctuation(s: str) -> str:
         .replace("`", "")
         .replace(" ", "")
     )
+
+
+def remove_special_characters(s: str) -> str:
+    return s.replace("*", "")
 
 
 def remove_accents(text: str) -> str:
