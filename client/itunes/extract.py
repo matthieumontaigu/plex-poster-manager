@@ -6,7 +6,7 @@ from client.itunes.search import search_movies
 def get_itunes_artworks(
     title: str, directors: list[str], year: int, country: str
 ) -> tuple[str, str, str] | None:
-    candidates = search_movies(country, title.lower())
+    candidates = search_movies(country, title)
     if not candidates:
         return None
 
