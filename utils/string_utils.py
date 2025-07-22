@@ -40,7 +40,7 @@ def remove_punctuation(s: str) -> str:
 
 
 def remove_special_characters(s: str) -> str:
-    return s.replace("*", "")
+    return s.replace("*", "").replace("&", "")
 
 
 def remove_accents(text: str) -> str:
