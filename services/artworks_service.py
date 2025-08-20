@@ -86,8 +86,9 @@ class ArtworksService:
 
             time.sleep(self.api_call_interval)
 
-        last_movie = recently_added_movies[-1]
-        self.recently_added_cache.clear(last_movie)
+        if recently_added_movies:
+            last_movie = recently_added_movies[-1]
+            self.recently_added_cache.clear(last_movie)
 
         logger.info("\nFinished updating latest movies from Plex\n\n")
 
