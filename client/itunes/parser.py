@@ -44,6 +44,15 @@ from datetime import datetime
 """
 
 
+def get_kind(result: dict) -> str | None:
+    """Get the kind from the iTunes result."""
+    return result.get("kind")
+
+
+def get_attributes(result: dict) -> tuple[str, str, int]:
+    return get_title(result), get_director(result), get_year(result)
+
+
 def get_title(result: dict) -> str:
     """Get the title from the iTunes result."""
     return result["trackName"]
