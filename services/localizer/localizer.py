@@ -19,6 +19,12 @@ class Localizer:
 
     locales = {
         "fr": "fr-FR",
+        "us": "en-US",
+        "gb": "en-US",
+        "ca": "fr-FR",
+        "de": "de-DE",
+        "it": "it-IT",
+        "es": "es-ES",
     }
 
     def __init__(self, tmdb_api_requester: TMDBAPIRequester) -> None:
