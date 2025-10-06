@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from utils.string_utils import are_match
+
 if TYPE_CHECKING:
     from models.artworks import Artworks, Image, Metadata
     from models.movie import Movie
@@ -49,5 +51,15 @@ class ArtworkSelector:
     def is_perfect(self) -> bool:
         return self.ruleset.is_perfect(self.artworks, self.movie)
 
-    def is_logo_matching_poster(self) -> bool:
-        return self.ruleset.is_logo_matching_poster(self.artworks)
+    def get_country_to_match_logo(self) -> str | None:
+        logo, poster = self.artworks["logo"], self.artworks["poster"]
+        if not logo or not poster:
+            return None
+
+        if logo["country"] == poster["country"]:
+            return None
+
+        if are_match(logo["title"], poster["title"]):
+            return None
+
+        return poster["country"]

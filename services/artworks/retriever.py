@@ -96,11 +96,12 @@ class ArtworksRetriever:
         if self.fallback_logo_provider is None:
             return None
 
-        if selector.is_logo_matching_poster():
+        country_to_match = selector.get_country_to_match_logo()
+        if not country_to_match:
             return None
 
         country_logo_provider = CountryLogoProvider(
-            self.fallback_logo_provider, self.localizer, movie["metadata_country"]
+            self.fallback_logo_provider, self.localizer, country_to_match
         )
         return country_logo_provider.get_logo(movie)
 
