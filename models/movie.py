@@ -9,6 +9,5 @@ class Movie(TypedDict):
     release_date: str | None
     director: list[str]
     metadata_country: str
-    metadata_language: str
     guid: str | None
     tmdb_id: int | None
