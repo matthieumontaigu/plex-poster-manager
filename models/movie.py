@@ -1,0 +1,14 @@
+from typing import TypedDict
+
+
+class Movie(TypedDict):
+    plex_movie_id: int
+    title: str
+    year: int
+    added_date: int
+    release_date: str | None
+    director: list[str]
+    metadata_country: str
+    metadata_language: str
+    guid: str | None
+    tmdb_id: int | None
