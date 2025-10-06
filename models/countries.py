@@ -14,3 +14,11 @@ LANGUAGE_CODES = {
     "it": "it",
     "es": "es",
 }
+
+LOCALES = {
+    "fr": "fr-FR",
+    "en": "en-US",
+    "de": "de-DE",
+    "it": "it-IT",
+    "es": "es-ES",
+}
