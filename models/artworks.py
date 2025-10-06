@@ -4,7 +4,6 @@ from typing import TypedDict
 class Image(TypedDict):
     url: str
     country: str
-    language: str
     title: str
     source: str
 
@@ -21,16 +20,13 @@ class Artworks(TypedDict):
     release_date: Metadata | None
 
 
-def build_image(
-    url: str | None, country: str, language: str, title: str, source: str
-) -> Image | None:
+def build_image(url: str | None, country: str, title: str, source: str) -> Image | None:
     if url is None:
         return None
 
     return {
         "url": url,
         "country": country,
-        "language": language,
         "title": title,
         "source": source,
     }
