@@ -14,9 +14,9 @@ class ArtworkRuleset:
     Defines the logic for deciding whether a new artwork should replace an existing one.
     """
 
-    def __init__(self, match_target_title: bool) -> None:
+    def __init__(self, match_target_title: bool, perfect_source: str) -> None:
         self.match_target_title = match_target_title
-        self.perfect_source = "apple"
+        self.perfect_source = perfect_source
 
     def can_accept_localized_title(
         self, localized_title: str, movie_title: str
