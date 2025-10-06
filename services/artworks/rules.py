@@ -90,12 +90,12 @@ class ArtworkRuleset:
 
         return True
 
-    def is_logo_matching_poster(self, artworks: Artworks, movie: Movie) -> bool:
+    def is_logo_matching_poster(self, artworks: Artworks) -> bool:
         logo, poster = artworks["logo"], artworks["poster"]
         if not logo or not poster:
             return True
 
-        if poster["country"] != movie["metadata_country"]:
+        if logo["country"] == poster["country"]:
             return True
 
         return are_match(logo["title"], poster["title"])

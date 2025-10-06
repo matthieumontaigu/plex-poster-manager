@@ -50,4 +50,4 @@ class ArtworkSelector:
         return self.ruleset.is_perfect(self.artworks, self.movie)
 
     def is_logo_matching_poster(self) -> bool:
-        return self.ruleset.is_logo_matching_poster(self.artworks, self.movie)
+        return self.ruleset.is_logo_matching_poster(self.artworks)
