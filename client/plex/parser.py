@@ -1,41 +1,47 @@
+from __future__ import annotations
+
 import urllib.parse
 import xml.etree.ElementTree as ET
+from typing import TYPE_CHECKING
 from xml.etree.ElementTree import Element
 
-from requests import Response
+if TYPE_CHECKING:
+    from requests import Response
+
+    from models.movie import Movie
 
 
-def get_movies(
-    api_response: Response,
-) -> list[dict[str, str | int | list[str] | None]]:
+def parse_movies(api_response: Response, country: str) -> list[Movie]:
     root = parse_xml(api_response)
-    return _get_movies(root)
+    return _get_movies(root, country)
 
 
-def get_movie_attributes(
-    api_response: Response,
-) -> dict[str, str | int | list[str] | None]:
+def parse_movie(api_response: Response, country: str) -> Movie | None:
     root = parse_xml(api_response)
     movie = root.find("Video")
     if movie is None:
-        return {}
-    return _get_movie_attributes(movie)
+        return None
+    return _get_movie(movie, country)
 
 
 def parse_xml(api_response: Response) -> Element:
     return ET.fromstring(api_response.content)
 
 
-def _get_movies(root: Element) -> list[dict[str, str | int | list[str] | None]]:
+def _get_movies(root: Element, country: str) -> list[Movie]:
     movies = []
-    for movie in root.findall("Video"):
-        movie_attributes = _get_movie_attributes(movie)
-        movies.append(movie_attributes)
+    for movie_element in root.findall("Video"):
+        movie = _get_movie(movie_element, country)
+        movies.append(movie)
     return movies
 
 
-def _get_movie_attributes(movie: Element) -> dict[str, str | int | list[str] | None]:
+def _get_movie(movie: Element, country: str) -> Movie:
     """Extract movie attributes from the XML element."""
+    plex_movie_id = movie.attrib.get("ratingKey")
+    if plex_movie_id is None:
+        raise ValueError("Movie element is missing 'ratingKey' attribute.")
+
     title = movie.attrib.get("title")
     cleaned_title = title.replace("\xa0", " ") if title else ""
 
@@ -45,18 +51,17 @@ def _get_movie_attributes(movie: Element) -> dict[str, str | int | list[str] | N
     movie_year = movie.attrib.get("year")
     year = int(movie_year) if movie_year else 0
 
-    attributes = {
-        "plex_movie_id": movie.attrib.get("ratingKey"),
+    attributes: Movie = {
+        "plex_movie_id": int(plex_movie_id),
         "title": cleaned_title,
         "year": year,
         "added_date": added_date,
         "release_date": movie.attrib.get("originallyAvailableAt"),
         "director": get_directors(movie),
+        "metadata_country": country,
         "guid": movie.get("guid"),
+        "tmdb_id": get_tmdb_id(movie),
     }
-    tmdb_id = get_tmdb_id(movie)
-    if tmdb_id:
-        attributes["tmdb_id"] = tmdb_id
     return attributes
 
 
@@ -73,7 +78,7 @@ def get_directors(movie: Element) -> list[str]:
     return directors_names
 
 
-def get_tmdb_id(movie: Element) -> str | None:
+def get_tmdb_id(movie: Element) -> int | None:
     guid = movie.findall(".//Guid")
     if not guid:
         return None
@@ -82,12 +87,12 @@ def get_tmdb_id(movie: Element) -> str | None:
         id = g.attrib.get("id")
         if id and id.startswith("tmdb://"):
             # Return the TMDB ID by stripping the prefix
-            return id.split("://")[-1]
+            return int(id.split("://")[-1])
 
     return None
 
 
-def get_photos(api_response: Response) -> list[dict[str, str]]:
+def parse_photos(api_response: Response) -> list[dict[str, str]]:
     """
     Extract photo URLs from the XML element.
     :param photos: The XML element containing photo information.
