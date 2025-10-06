@@ -1,30 +1,43 @@
+from __future__ import annotations
+
 import hashlib
 import logging
+from typing import TYPE_CHECKING
 
 from client.plex.api import PlexAPIRequester
-from client.plex.parser import get_movie_attributes, get_movies, get_photos
+from client.plex.parser import parse_movie, parse_movies, parse_photos
+
+if TYPE_CHECKING:
+    from models.movie import Movie
 
 logger = logging.getLogger(__name__)
 
 
 class PlexManager:
-    def __init__(self, plex_url: str, plex_token: str, metadata_path: str = "") -> None:
+    def __init__(
+        self,
+        plex_url: str,
+        plex_token: str,
+        metadata_country: str,
+        metadata_path: str = "",
+    ) -> None:
         self.api_requester = PlexAPIRequester(plex_url, plex_token)
+        self.country = metadata_country
         self.metadata_path = metadata_path
 
-    def get_all_movies(self) -> list[dict[str, str | int | None]]:
+    def get_all_movies(self) -> list[Movie]:
         api_response = self.api_requester.get_all_movies()
         if api_response is None:
             logger.error("Failed to fetch all movies from Plex.")
             return []
-        return get_movies(api_response)
+        return parse_movies(api_response, self.country)
 
-    def get_recently_added_movies(self) -> list[dict[str, str | int | None]]:
+    def get_recently_added_movies(self) -> list[Movie]:
         api_response = self.api_requester.get_recently_added_movies()
         if api_response is None:
             logger.error("Failed to fetch recently added movies from Plex.")
             return []
-        return get_movies(api_response)
+        return parse_movies(api_response, self.country)
 
     def upload_poster(self, plex_movie_id: int, poster_url: str) -> bool:
         return self.api_requester.upload_poster(plex_movie_id, poster_url)
@@ -50,19 +63,19 @@ class PlexManager:
         api_response = self.api_requester.get_metadata(movie_id)
         return api_response is not None
 
-    def get_metadata(self, movie_id: int) -> dict[str, str | None]:
+    def get_metadata(self, movie_id: int) -> Movie | None:
         api_response = self.api_requester.get_metadata(movie_id)
         if api_response is None:
-            return {}
-        return get_movie_attributes(api_response)
+            return None
+        return parse_movie(api_response, self.country)
 
-    def get_tmdb_id(self, movie_id: int) -> str | None:
+    def get_tmdb_id(self, movie_id: int) -> int | None:
         metadata = self.get_metadata(movie_id)
-        return metadata.get("tmdb_id")
+        return metadata["tmdb_id"] if metadata else None
 
     def get_plex_guid(self, movie_id: int) -> str | None:
         metadata = self.get_metadata(movie_id)
-        return metadata.get("guid")
+        return metadata["guid"] if metadata else None
 
     def get_bundle_id(self, movie_id: int) -> str | None:
         plex_guid = self.get_plex_guid(movie_id)
@@ -79,11 +92,11 @@ class PlexManager:
         bundle_folder = bundle_id[1:]
         return f"{self.metadata_path}/Movies/{subfolder}/{bundle_folder}.bundle"
 
-    def get_logos(self, movie_id: int) -> list[dict[str, str | None]]:
+    def get_logos(self, movie_id: int) -> list[dict[str, str]]:
         api_response = self.api_requester.get_logos(movie_id)
         if api_response is None:
             return []
-        return get_photos(api_response)
+        return parse_photos(api_response)
 
     def get_movie_image_path(self, key: str) -> str:
         """
