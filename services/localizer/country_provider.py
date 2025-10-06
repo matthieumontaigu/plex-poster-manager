@@ -17,12 +17,10 @@ class CountryProvider:
         self.provider = provider
         self.localizer = localizer
         self.country = country
-        self.language = self.localizer.get_language(country)
         self.source = provider.name
 
         self.base_image = {
             "country": self.country,
-            "language": self.language,
             "source": self.source,
         }
 
@@ -45,4 +43,4 @@ class CountryProvider:
         return poster, background, logo, release_date
 
     def get_localized_title(self, movie: Movie) -> str | None:
-        return self.localizer.get_localized_title(movie, self.language)
+        return self.localizer.get_localized_title(movie, self.country)
