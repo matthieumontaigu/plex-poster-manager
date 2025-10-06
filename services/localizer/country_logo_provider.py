@@ -19,13 +19,11 @@ class CountryLogoProvider:
         self.logo_provider = logo_provider
         self.localizer = localizer
         self.country = country
-        self.language = self.localizer.get_language(country)
         self.locale_code = self.localizer.get_locale_code(country)
         self.source = logo_provider.name
 
         self.base_image = {
             "country": self.country,
-            "language": self.language,
             "source": self.source,
         }
 
@@ -34,7 +32,7 @@ class CountryLogoProvider:
         if not tmdb_id:
             return None
 
-        localized_title = self.localizer.get_localized_title(movie, self.language)
+        localized_title = self.localizer.get_localized_title(movie, self.country)
         if not localized_title:
             return None
 
