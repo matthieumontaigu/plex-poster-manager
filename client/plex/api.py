@@ -7,10 +7,13 @@ logger = logging.getLogger(__name__)
 
 
 class PlexAPIRequester:
-    def __init__(self, api_url: str, token: str) -> None:
+    def __init__(self, api_url: str, plex_token: str) -> None:
         self.api_url = api_url.rstrip("/")
-        self.token = token
-        self.headers = {"X-Plex-Token": self.token}
+        self.headers = {
+            "X-Plex-Token": plex_token,
+            "X-Plex-Product": "Plex poster manager",
+            "X-Plex-Pms-Api-Version": "1.0",
+        }
 
     def get_all_movies(self) -> Response | None:
         """Get all movies."""
