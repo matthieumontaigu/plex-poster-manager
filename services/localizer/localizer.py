@@ -30,20 +30,16 @@ class Localizer:
         self.tmdb_api_requester = tmdb_api_requester
         self.country_languages = LANGUAGE_CODES
 
-    def get_localized_title(self, movie: Movie, language: str) -> str | None:
-        if language == movie["metadata_language"]:
+    def get_localized_title(self, movie: Movie, country: str) -> str | None:
+        if country == movie["metadata_country"]:
             return movie["title"]
 
         tmdb_id = movie["tmdb_id"]
         if not tmdb_id:
             return None
 
-        localized_title = self.get_language_title(tmdb_id, language)
+        localized_title = self.get_country_title(tmdb_id, country)
         return localized_title
-
-    def get_language_title(self, movie_id: int, language: str) -> str | None:
-        """Fetch the localized movie title from TMDB for a given language."""
-        return self.tmdb_api_requester.get_movie_title(movie_id, language)
 
     def get_country_title(self, movie_id: int, country: str) -> str | None:
         """
@@ -58,6 +54,10 @@ class Localizer:
         """
         language = self.get_language(country)
         return self.get_language_title(movie_id, language)
+
+    def get_language_title(self, movie_id: int, language: str) -> str | None:
+        """Fetch the localized movie title from TMDB for a given language."""
+        return self.tmdb_api_requester.get_movie_title(movie_id, language)
 
     def get_language(self, country: str) -> str:
         """Resolve a TMDB language code for a given country code."""
