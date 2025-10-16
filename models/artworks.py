@@ -1,4 +1,4 @@
-from typing import TypedDict
+from typing import NotRequired, TypedDict
 
 
 class Image(TypedDict):
@@ -17,7 +17,7 @@ class Artworks(TypedDict):
     poster: Image | None
     background: Image | None
     logo: Image | None
-    release_date: Metadata | None
+    fallback_logo: NotRequired[Image]
 
 
 def build_image(url: str | None, country: str, title: str, source: str) -> Image | None:
