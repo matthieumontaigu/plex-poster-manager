@@ -11,6 +11,6 @@ class LogoProvider(ABC):
         ...
 
     @abstractmethod
-    def get_logo(self, movie_id: int, language: str) -> str | None:
+    def get_logo(self, movie_id: int, country: str) -> str | None:
         """Return logo image or None if not available."""
         ...

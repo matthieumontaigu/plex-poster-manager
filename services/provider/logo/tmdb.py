@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from models.countries import get_locale_code
 from services.provider.logo.base import LogoProvider
 
 if TYPE_CHECKING:
@@ -18,5 +19,6 @@ class TMDBLogoProvider(LogoProvider):
     def name(self) -> str:
         return "tmdb"
 
-    def get_logo(self, movie_id: int, language: str) -> str | None:
-        return self.tmdb_api_requester.get_movie_logo_url(movie_id, language)
+    def get_logo(self, movie_id: int, country: str) -> str | None:
+        locale = get_locale_code(country)
+        return self.tmdb_api_requester.get_movie_logo_url(movie_id, locale)
