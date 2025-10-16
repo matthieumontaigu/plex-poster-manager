@@ -17,8 +17,21 @@ LANGUAGE_CODES = {
 
 LOCALES = {
     "fr": "fr-FR",
-    "en": "en-US",
-    "de": "de-DE",
-    "it": "it-IT",
-    "es": "es-ES",
 }
+
+
+def get_language_code(country: str) -> str:
+    """Resolve a language code for a given country code."""
+    if country not in LANGUAGE_CODES:
+        raise ValueError(f"Unsupported country code: {country}")
+
+    return LANGUAGE_CODES[country]
+
+
+def get_locale_code(country: str) -> str:
+    """Resolve a locale code for a given country code."""
+    language = get_language_code(country)
+    if language not in LOCALES:
+        return language
+
+    return LOCALES[language]
