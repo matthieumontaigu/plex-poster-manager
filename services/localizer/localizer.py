@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from models.countries import LANGUAGE_CODES, LOCALES
+from models.countries import get_language_code, get_locale_code
 
 if TYPE_CHECKING:
     from client.tmdb.api import TMDBAPIRequester
@@ -24,7 +24,6 @@ class Localizer:
                 Instance of TMDBAPIRequester used to query movie information from TMDB.
         """
         self.tmdb_api_requester = tmdb_api_requester
-        self.country_languages = LANGUAGE_CODES
 
     def get_localized_title(self, movie: Movie, country: str) -> str | None:
         if country == movie["metadata_country"]:
@@ -48,24 +47,9 @@ class Localizer:
         Returns:
             The localized title string, or None if not found.
         """
-        language = self.get_language_code(country)
+        language = get_language_code(country)
         return self.get_language_title(movie_id, language)
 
     def get_language_title(self, movie_id: int, language: str) -> str | None:
         """Fetch the localized movie title from TMDB for a given language."""
         return self.tmdb_api_requester.get_movie_title(movie_id, language)
-
-    def get_language_code(self, country: str) -> str:
-        """Resolve a TMDB language code for a given country code."""
-        if country not in self.country_languages:
-            raise ValueError(f"Unsupported country code: {country}")
-
-        return self.country_languages[country]
-
-    def get_locale_code(self, country: str) -> str:
-        """Resolve a TMDB logo language code for a given country code."""
-        language = self.get_language_code(country)
-        if language not in LOCALES:
-            raise ValueError(f"Unsupported language code: {language}")
-
-        return LOCALES[language]
