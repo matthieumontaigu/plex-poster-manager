@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 import time
 from typing import TYPE_CHECKING
@@ -11,7 +13,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-class ArtworkUploader:
+class ArtworksUploader:
     """Handles uploading artworks to Plex."""
 
     def __init__(self, plex_manager: PlexManager, upload_interval: float = 1.0):
@@ -23,13 +25,6 @@ class ArtworkUploader:
         movie: Movie,
         artworks: Artworks,
     ) -> bool:
-
-        movie_title = movie.get("title", "Unknown")
-        movie_id = movie["plex_movie_id"]
-        logger.info(
-            f"Starting artwork upload for movie '{movie_title}' (ID: {movie_id})"
-        )
-
         uploaded = True
 
         for name in ["poster", "background", "logo"]:
