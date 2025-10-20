@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from models.countries import get_language_code, get_locale_code
+from models.countries import get_language_code
 
 if TYPE_CHECKING:
     from client.tmdb.api import TMDBAPIRequester
