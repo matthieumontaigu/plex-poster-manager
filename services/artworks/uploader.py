@@ -27,14 +27,16 @@ class ArtworksUploader:
     ) -> bool:
         uploaded = True
 
-        for name in ["poster", "background", "logo"]:
-            image: Image | None = artworks[name]
-            uploaded &= self.upload_image(movie, name, image)
+        for artwork_type in ["poster", "background", "logo"]:
+            image: Image | None = artworks[artwork_type]
+            uploaded &= self.upload_image(movie, artwork_type, image)
             time.sleep(self.upload_interval)
 
         return uploaded
 
-    def upload_image(self, movie: Movie, name: str, image: Image | None) -> bool:
+    def upload_image(
+        self, movie: Movie, artwork_type: str, image: Image | None
+    ) -> bool:
         if not image:
             return True
 
@@ -42,24 +44,16 @@ class ArtworksUploader:
         url = image["url"]
 
         success = False
-        match name:
-            case "poster":
-                success = self.plex_manager.upload_poster(movie_id, url)
-            case "background":
-                success = self.plex_manager.upload_background(movie_id, url)
-            case "logo":
-                success = self.plex_manager.upload_logo(movie_id, url)
-            case _:
-                raise ValueError(f"Unknown artwork type: {name}")
+        success = self.plex_manager.upload_image(movie_id, artwork_type, url)
 
         title = movie["title"]
         if success:
             logger.info(
-                f"Successfully uploaded {name} for movie '{title}' (ID: {movie_id})"
+                f"Successfully uploaded {artwork_type} for movie '{title}' (ID: {movie_id})"
             )
         else:
             logger.warning(
-                f"Failed to upload {name} for movie '{title}' (ID: {movie_id}). URL: {url}"
+                f"Failed to upload {artwork_type} for movie '{title}' (ID: {movie_id}). URL: {url}"
             )
 
         return success
