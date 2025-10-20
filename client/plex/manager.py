@@ -2,9 +2,10 @@ from __future__ import annotations
 
 import hashlib
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from client.plex.api import PlexAPIRequester
+from client.plex.image import PlexImage
 from client.plex.parser import parse_movie, parse_movies, parse_photos
 
 if TYPE_CHECKING:
@@ -39,6 +40,9 @@ class PlexManager:
             return []
         return parse_movies(api_response, self.country)
 
+    def upload_image(self, plex_movie_id: int, image_type: str, image_url: str):
+        return self.api_requester.upload_image(plex_movie_id, image_type, image_url)
+
     def upload_poster(self, plex_movie_id: int, poster_url: str) -> bool:
         return self.api_requester.upload_poster(plex_movie_id, poster_url)
 
@@ -48,8 +52,12 @@ class PlexManager:
     def upload_logo(self, movie_id: int, logo_url: str) -> bool:
         return self.api_requester.upload_logo(movie_id, logo_url)
 
-    def upload_logo_file(self, movie_id: int, logo_file_path: str) -> bool:
-        return self.api_requester.upload_logo_file(movie_id, logo_file_path)
+    def upload_image_file(
+        self, movie_id: int, image_type: str, image_file_path: str
+    ) -> bool:
+        return self.api_requester.upload_image_file(
+            movie_id, image_type, image_file_path
+        )
 
     def update_release_date(self, movie_id: int, release_date: str) -> bool:
         return self.api_requester.update_release_date(movie_id, release_date)
@@ -92,11 +100,12 @@ class PlexManager:
         bundle_folder = bundle_id[1:]
         return f"{self.metadata_path}/Movies/{subfolder}/{bundle_folder}.bundle"
 
-    def get_logos(self, movie_id: int) -> list[dict[str, str]]:
-        api_response = self.api_requester.get_logos(movie_id)
+    def get_images(self, movie_id: int, image_type: str) -> list[PlexImage]:
+        api_response = self.api_requester.get_images(movie_id, image_type)
         if api_response is None:
             return []
-        return parse_photos(api_response)
+
+        return cast(list[PlexImage], parse_photos(api_response))
 
     def get_movie_image_path(self, key: str) -> str:
         """
