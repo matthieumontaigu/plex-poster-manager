@@ -5,6 +5,12 @@ from requests import Response
 
 logger = logging.getLogger(__name__)
 
+IMAGES_MAPPING = {
+    "poster": "posters",
+    "background": "arts",
+    "logo": "clearLogos",
+}
+
 
 class PlexAPIRequester:
     def __init__(self, api_url: str, plex_token: str) -> None:
@@ -37,50 +43,54 @@ class PlexAPIRequester:
         response = self.get(endpoint, {})
         return response
 
-    def get_logos(self, movie_id: int) -> Response | None:
-        """Get logos for a specific movie."""
-        endpoint = f"library/metadata/{movie_id}/clearLogos"
+    @staticmethod
+    def get_image_type(image_type: str) -> str:
+        if image_type not in IMAGES_MAPPING:
+            raise ValueError(
+                f"Invalid image type: {image_type}, available types: {list(IMAGES_MAPPING.keys())}"
+            )
+        return IMAGES_MAPPING[image_type]
+
+    def get_images(self, movie_id: int, image_type: str) -> Response | None:
+        """Get images of a specific type for a movie."""
+        image_type = self.get_image_type(image_type)
+        endpoint = f"library/metadata/{movie_id}/{image_type}"
 
         response = self.get(endpoint, {})
         return response
 
-    def upload_poster(self, movie_id: int, poster_url: str) -> bool:
-        """Upload a poster for a movie."""
-        endpoint = f"library/metadata/{movie_id}/posters"
-        params = {"url": poster_url}
+    def upload_image(self, movie_id: int, image_type: str, image_url: str) -> bool:
+        image_type = self.get_image_type(image_type)
+        endpoint = f"library/metadata/{movie_id}/{image_type}"
+        params = {"url": image_url}
 
         response = self.post(endpoint, params)
         if response is None:
             return False
         return response.status_code == 200
+
+    def upload_poster(self, movie_id: int, poster_url: str) -> bool:
+        """Upload a poster for a movie."""
+        return self.upload_image(movie_id, "poster", poster_url)
 
     def upload_background(self, movie_id: int, background_url: str) -> bool:
         """Upload a background for a movie."""
-        endpoint = f"library/metadata/{movie_id}/arts"
-        params = {"url": background_url}
-
-        response = self.post(endpoint, params)
-        if response is None:
-            return False
-        return response.status_code == 200
+        return self.upload_image(movie_id, "background", background_url)
 
     def upload_logo(self, movie_id: int, logo_url: str) -> bool:
         """Upload a logo for a movie."""
-        endpoint = f"library/metadata/{movie_id}/clearLogos"
-        params = {"url": logo_url}
+        return self.upload_image(movie_id, "logo", logo_url)
 
-        response = self.post(endpoint, params)
-        if response is None:
-            return False
-        return response.status_code == 200
+    def upload_image_file(
+        self, movie_id: int, image_type: str, image_file_path: str
+    ) -> bool:
+        """Upload an image file for a movie."""
+        image_type = self.get_image_type(image_type)
+        endpoint = f"library/metadata/{movie_id}/{image_type}"
+        with open(image_file_path, "rb") as f:
+            image_data = f.read()
 
-    def upload_logo_file(self, movie_id: int, logo_file_path: str) -> bool:
-        """Upload a logo for a movie."""
-        endpoint = f"library/metadata/{movie_id}/clearLogos"
-        with open(logo_file_path, "rb") as f:
-            logo_data = f.read()
-
-        response = self.post(endpoint, data=logo_data)
+        response = self.post(endpoint, data=image_data)
         if response is None:
             return False
         return response.status_code == 200
