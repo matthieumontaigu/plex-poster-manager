@@ -3,7 +3,6 @@ from unittest.mock import MagicMock, patch
 
 from models.movie import Movie
 from services.artworks.retriever import ArtworksRetriever
-from services.artworks.rules import ArtworkRuleset
 
 
 class TestArtworksUpdater(unittest.TestCase):
