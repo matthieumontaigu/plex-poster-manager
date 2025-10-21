@@ -36,6 +36,7 @@ class ArtworksReverterTask:
             movies, key=lambda movie: movie["added_date"], reverse=True
         )
         self.process_artworks(movies_sorted)
+        logger.info("✅ Finished reverting artworks for all movies.")
 
     def process_artworks(self, movies: list[Movie]) -> None:
         for artwork_type in self.artworks_types:
