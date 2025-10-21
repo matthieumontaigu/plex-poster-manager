@@ -1,5 +1,6 @@
+from collections.abc import ItemsView
 from pathlib import Path
-from typing import Any, ItemsView
+from typing import Any
 
 from utils.file_utils import load_json_file, save_json_file
 
@@ -16,10 +17,10 @@ class Cache:
         else:
             self.data = {}
 
-    def get(self, key: int) -> dict | None:
+    def get(self, key: int) -> Any | None:
         return self.data.get(key)
 
-    def add(self, key: int, value: dict) -> None:
+    def add(self, key: int, value: Any) -> None:
         self.data[key] = value
 
     def remove(self, key: int) -> None:
@@ -29,7 +30,7 @@ class Cache:
     def save(self) -> None:
         save_json_file(self.filepath, self.data)
 
-    def items(self) -> ItemsView[Any, Any]:
+    def items(self) -> ItemsView[int, Any]:
         return self.data.items()
 
     def __contains__(self, key: int) -> bool:
