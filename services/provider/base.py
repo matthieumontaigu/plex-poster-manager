@@ -12,8 +12,3 @@ class Provider(ABC):
     def get_artworks(
         self, title: str, directors: list[str], year: int, country: str
     ) -> tuple[str | None, str | None, str | None]: ...
-
-    @abstractmethod
-    def get_release_date(
-        self, title: str, directors: list[str], year: int, country: str
-    ) -> str | None: ...
