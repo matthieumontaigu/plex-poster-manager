@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from client.plex.manager import PlexManager
     from services.artworks.updater import ArtworksUpdater
+    from services.metadata.updater import MetadataUpdater
     from storage.movies_cache import MoviesCache
 
 logger = logging.getLogger(__name__)
@@ -26,6 +27,7 @@ class RecentlyAddedTask:
         self,
         plex_manager: PlexManager,
         artworks_updater: ArtworksUpdater,
+        metadata_updater: MetadataUpdater,
         recently_added_cache: MoviesCache,
         missing_artworks_cache: MoviesCache,
         sleep_interval: float = 1.0,
@@ -33,7 +35,7 @@ class RecentlyAddedTask:
         self.plex_manager = plex_manager
         self.artworks_updater = artworks_updater
         self.sleep_interval = sleep_interval
-
+        self.metadata_updater = metadata_updater
         self.recent_cache = recently_added_cache
         self.missing_cache = missing_artworks_cache
 
@@ -73,6 +75,8 @@ class RecentlyAddedTask:
             if status == "success":
                 self.recent_cache.add(movie)
                 logger.info(f"✅ Completed artworks for {movie['title']}")
+
+            self.metadata_updater.update_release_date(movie)
 
             time.sleep(self.sleep_interval)
 
