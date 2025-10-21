@@ -1,21 +1,39 @@
 import re
+from urllib.parse import urlsplit, urlunsplit
 
 from bs4 import BeautifulSoup
+
+from client.apple_tv.attributes import Attributes, get_attributes
 from utils.parsing import parse_html
 from utils.requests_utils import get_request
 
 
-def get_apple_tv_artworks(url: str) -> tuple[str | None, str | None]:
+def get_apple_tv_artworks(
+    url: str,
+) -> tuple[Attributes | None, str | None, str | None, str | None]:
     response = get_request(url)
     if response is None:
-        return None, None
+        return None, None, None, None
 
     parsed_page = parse_html(response.text)
 
-    logo_url = get_logo_url(parsed_page)
-    background_url = get_background_url(parsed_page)
+    attributes = get_attributes(parsed_page)
+    if attributes is None:
+        return None, None, None, None
 
-    return background_url, logo_url
+    poster_url = get_poster_url(attributes)
+    background_url = get_background_url(parsed_page)
+    logo_url = get_logo_url(parsed_page)
+
+    return attributes, poster_url, background_url, logo_url
+
+
+def get_poster_url(attributes: Attributes) -> str | None:
+    if "image" not in attributes:
+        return None
+
+    image_url = attributes["image"]
+    return get_enlarged_image_url(image_url, "2000x0w.jpg")
 
 
 def get_logo_url(page: BeautifulSoup) -> str | None:
@@ -53,6 +71,25 @@ def get_image_url(picture: BeautifulSoup, size: str, extension: str) -> str | No
     image_url = srcset.split(", ")[0].split(" ")[0]
     target_size = f"{size}.{extension}"
     return get_resized_image_url(image_url, target_size)
+
+
+def get_enlarged_image_url(url: str, target_size: str) -> str:
+    """Get the largest available image by replacing size with target_size'2000x0w.jpg'"""
+
+    parts = urlsplit(url)
+
+    # Split path at the last '/'
+    path_parts = parts.path.rsplit("/", 1)
+    if len(path_parts) == 2:
+        path_parts[-1] = target_size
+        new_path = "/".join(path_parts)
+    else:
+        new_path = target_size
+
+    # Rebuild URL with new path
+    return urlunsplit(
+        (parts.scheme, parts.netloc, new_path, parts.query, parts.fragment)
+    )
 
 
 def get_resized_image_url(url: str, size: str) -> str:
