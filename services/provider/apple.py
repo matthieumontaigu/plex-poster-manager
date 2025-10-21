@@ -1,6 +1,12 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from client.apple_tv.extract import get_apple_tv_artworks
-from client.itunes.extract import get_itunes_artworks
 from services.provider.base import Provider
+
+if TYPE_CHECKING:
+    from client.google.search_engine import SearchEngine
 
 
 class AppleProvider(Provider):
@@ -10,18 +16,21 @@ class AppleProvider(Provider):
     def name(self) -> str:
         return "apple"
 
+    def __init__(self, search_engine: SearchEngine) -> None:
+        self.search_engine = search_engine
+
     def get_artworks(
-        self, title: str, directors: list[str], year: int, country: str
+        self,
+        title: str,
+        directors: list[str],
+        year: int,
+        country: str,
+        entity: str = "movie",
     ) -> tuple[str | None, str | None, str | None]:
-        itunes_url, poster_url, _ = get_itunes_artworks(title, directors, year, country)
-        if not itunes_url:
+
+        apple_tv_url = self.search_engine.query(title, directors, year, country, entity)
+        if not apple_tv_url:
             return None, None, None
 
-        background_url, logo_url = get_apple_tv_artworks(itunes_url)
+        _, poster_url, background_url, logo_url = get_apple_tv_artworks(apple_tv_url)
         return poster_url, background_url, logo_url
-
-    def get_release_date(
-        self, title: str, directors: list[str], year: int, country: str
-    ) -> str | None:
-        _, _, release_date = get_itunes_artworks(title, directors, year, country)
-        return release_date
