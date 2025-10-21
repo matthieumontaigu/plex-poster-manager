@@ -1,6 +1,7 @@
 import argparse
 from typing import NotRequired, TypedDict, cast
 
+from client.google.search_engine import SearchEngine
 from client.plex.manager import PlexManager
 from client.tmdb.api import TMDBAPIRequester
 from services.artworks.retriever import ArtworksRetriever
@@ -30,6 +31,11 @@ class PlexConfig(TypedDict):
 
 class TMDBConfig(TypedDict):
     api_token: str
+
+
+class GoogleSearchConfig(TypedDict):
+    api_key: str
+    custom_search_id: str
 
 
 class RetrieverConfig(TypedDict):
@@ -66,6 +72,7 @@ class CacheConfig(TypedDict):
 class Config(TypedDict):
     plex: PlexConfig
     tmdb: TMDBConfig
+    google: GoogleSearchConfig
     artworks: ArtworksConfig
     schedules: dict[str, ScheduleConfig]
     cache: CacheConfig
@@ -92,6 +99,11 @@ if __name__ == "__main__":
     tmdb_config = config["tmdb"]
     tmdb_requester = TMDBAPIRequester(tmdb_config["api_token"])
 
+    google_config = config["google"]
+    search_engine = SearchEngine(
+        google_config["api_key"], google_config["custom_search_id"]
+    )
+
     artworks_config = config["artworks"]
     sleep_interval = artworks_config.get("movies_sleep_interval", 1.0)
 
@@ -99,7 +111,8 @@ if __name__ == "__main__":
     artworks_selector = ArtworksSelector(**selector_config)
 
     retriever_config = artworks_config["retriever"]
-    apple_provider = AppleProvider()
+
+    apple_provider = AppleProvider(search_engine)
     localizer = Localizer(tmdb_requester)
     countries_priority = retriever_config["countries"]
     logo_provider = TMDBLogoProvider(tmdb_requester)
