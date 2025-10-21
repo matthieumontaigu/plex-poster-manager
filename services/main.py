@@ -8,6 +8,7 @@ from services.artworks.selector import ArtworksSelector
 from services.artworks.updater import ArtworksUpdater
 from services.artworks.uploader import ArtworksUploader
 from services.localizer.localizer import Localizer
+from services.metadata.updater import MetadataUpdater
 from services.provider.apple import AppleProvider
 from services.provider.logo.tmdb import TMDBLogoProvider
 from services.scheduler.schedules import get_schedule_from_config
@@ -112,6 +113,8 @@ if __name__ == "__main__":
         artworks_retriever, artworks_selector, artworks_uploader
     )
 
+    metadata_updater = MetadataUpdater(plex_manager, localizer)
+
     cache_config = config["cache"]
     cache_path = cache_config["cache_path"]
     retention_days = cache_config.get("retention_days", 0)
@@ -121,7 +124,11 @@ if __name__ == "__main__":
     missing_artworks_cache = MoviesCache(cache_path, "missing_artworks")
 
     recently_added_task = RecentlyAddedTask(
-        plex_manager, artworks_updater, recently_added_cache, missing_artworks_cache
+        plex_manager,
+        artworks_updater,
+        metadata_updater,
+        recently_added_cache,
+        missing_artworks_cache,
     )
 
     missing_artworks_task = MissingArtworksTask(
