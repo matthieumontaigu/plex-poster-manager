@@ -1,5 +1,6 @@
 import unittest
 
+from models.movie import Movie
 from storage.movies_cache import MoviesCache
 
 
@@ -8,95 +9,225 @@ class TestMoviesCacheNoPatch(unittest.TestCase):
         self.cache = MoviesCache("dummy_path", "dummy_file")
 
     def test_add_and_contains(self):
-        movie = {"plex_movie_id": 1, "added_date": 100}
+        movie: Movie = {
+            "plex_movie_id": 1111,
+            "title": "Pris au piège - Caught Stealing",
+            "year": 2025,
+            "added_date": 100,
+            "release_date": "2025-08-27",
+            "director": ["Darren Aronofsky"],
+            "metadata_country": "fr",
+            "guid": None,
+            "tmdb_id": None,
+        }
         # Ensure the movie is not in the cache initially
         self.assertNotIn(movie, self.cache)
         self.cache.add(movie)
         # Check if the movie is now in the cache
         self.assertIn(movie, self.cache)
-        self.assertTrue(self.cache.updated)
 
     def test_add_duplicate(self):
-        movie = {"plex_movie_id": 2, "added_date": 200}
+        movie: Movie = {
+            "plex_movie_id": 1111,
+            "title": "Pris au piège - Caught Stealing",
+            "year": 2025,
+            "added_date": 100,
+            "release_date": "2025-08-27",
+            "director": ["Darren Aronofsky"],
+            "metadata_country": "fr",
+            "guid": None,
+            "tmdb_id": None,
+        }
         self.cache.add(movie)
-        self.cache.updated = False
         # Adding the same movie again should not update the cache
         self.cache.add(movie)
         self.assertIn(movie, self.cache)
-        self.assertFalse(self.cache.updated)
 
     def test_remove(self):
-        movie = {"plex_movie_id": 3, "added_date": 300}
+        movie: Movie = {
+            "plex_movie_id": 1111,
+            "title": "Pris au piège - Caught Stealing",
+            "year": 2025,
+            "added_date": 100,
+            "release_date": "2025-08-27",
+            "director": ["Darren Aronofsky"],
+            "metadata_country": "fr",
+            "guid": None,
+            "tmdb_id": None,
+        }
         self.cache.add(movie)
-        self.cache.updated = False
+        self.assertIn(movie, self.cache)
         # Ensure the movie is in the cache before removing
         self.cache.remove(movie)
         self.assertNotIn(movie, self.cache)
-        self.assertTrue(self.cache.updated)
 
     def test_remove_nonexistent(self):
-        movie = {"plex_movie_id": 4, "added_date": 400}
+        movie: Movie = {
+            "plex_movie_id": 1111,
+            "title": "Pris au piège - Caught Stealing",
+            "year": 2025,
+            "added_date": 100,
+            "release_date": "2025-08-27",
+            "director": ["Darren Aronofsky"],
+            "metadata_country": "fr",
+            "guid": None,
+            "tmdb_id": None,
+        }
         self.cache.remove(movie)
-        self.assertFalse(self.cache.updated)
+        self.assertNotIn(movie, self.cache)
 
     def test_remove_all(self):
-        movies = [
-            {"plex_movie_id": 5, "added_date": 500},
-            {"plex_movie_id": 6, "added_date": 600},
+        movies: list[Movie] = [
+            {
+                "plex_movie_id": 1111,
+                "title": "Pris au piège - Caught Stealing",
+                "year": 2025,
+                "added_date": 100,
+                "release_date": "2025-08-27",
+                "director": ["Darren Aronofsky"],
+                "metadata_country": "fr",
+                "guid": None,
+                "tmdb_id": None,
+            },
+            {
+                "plex_movie_id": 2222,
+                "title": "Eddington",
+                "year": 2025,
+                "added_date": 200,
+                "release_date": "2025-07-16",
+                "director": ["Ari Aster"],
+                "metadata_country": "fr",
+                "guid": None,
+                "tmdb_id": None,
+            },
         ]
         for m in movies:
             self.cache.add(m)
-        self.cache.updated = False
         self.cache.remove_all(movies)
         for m in movies:
             self.assertNotIn(m, self.cache)
-        self.assertTrue(self.cache.updated)
 
     def test_clear(self):
-        movies = [
-            {"plex_movie_id": 7, "added_date": 100},
-            {"plex_movie_id": 8, "added_date": 200},
-            {"plex_movie_id": 9, "added_date": 300},
+        movies: list[Movie] = [
+            {
+                "plex_movie_id": 1111,
+                "title": "Pris au piège - Caught Stealing",
+                "year": 2025,
+                "added_date": 100,
+                "release_date": "2025-08-27",
+                "director": ["Darren Aronofsky"],
+                "metadata_country": "fr",
+                "guid": None,
+                "tmdb_id": None,
+            },
+            {
+                "plex_movie_id": 2222,
+                "title": "Eddington",
+                "year": 2025,
+                "added_date": 200,
+                "release_date": "2025-07-16",
+                "director": ["Ari Aster"],
+                "metadata_country": "fr",
+                "guid": None,
+                "tmdb_id": None,
+            },
+            {
+                "plex_movie_id": 3333,
+                "title": "Marche ou crève",
+                "year": 2025,
+                "added_date": 300,
+                "release_date": "2025-10-01",
+                "director": ["Francis Lawrence"],
+                "metadata_country": "fr",
+                "guid": None,
+                "tmdb_id": None,
+            },
         ]
         for m in movies:
             self.cache.add(m)
-        self.cache.updated = False
         # Clear movies added before 200
-        self.cache.clear({"plex_movie_id": 8, "added_date": 200})
-        self.assertNotIn({"plex_movie_id": 7, "added_date": 100}, self.cache)
-        self.assertIn({"plex_movie_id": 8, "added_date": 200}, self.cache)
-        self.assertIn({"plex_movie_id": 9, "added_date": 300}, self.cache)
-        self.assertTrue(self.cache.updated)
+        self.cache.clear(movies[1])
+        self.assertNotIn(movies[0], self.cache)
+        self.assertIn(movies[1], self.cache)
+        self.assertIn(movies[2], self.cache)
 
     def test_clear_with_retention(self):
         self.cache = MoviesCache("dummy_path", "dummy_file", 100)
-        movies = [
-            {"plex_movie_id": 7, "added_date": 100},
-            {"plex_movie_id": 8, "added_date": 200},
-            {"plex_movie_id": 9, "added_date": 300},
+        movies: list[Movie] = [
+            {
+                "plex_movie_id": 1111,
+                "title": "Pris au piège - Caught Stealing",
+                "year": 2025,
+                "added_date": 100,
+                "release_date": "2025-08-27",
+                "director": ["Darren Aronofsky"],
+                "metadata_country": "fr",
+                "guid": None,
+                "tmdb_id": None,
+            },
+            {
+                "plex_movie_id": 2222,
+                "title": "Eddington",
+                "year": 2025,
+                "added_date": 200,
+                "release_date": "2025-07-16",
+                "director": ["Ari Aster"],
+                "metadata_country": "fr",
+                "guid": None,
+                "tmdb_id": None,
+            },
+            {
+                "plex_movie_id": 3333,
+                "title": "Marche ou crève",
+                "year": 2025,
+                "added_date": 300,
+                "release_date": "2025-10-01",
+                "director": ["Francis Lawrence"],
+                "metadata_country": "fr",
+                "guid": None,
+                "tmdb_id": None,
+            },
         ]
         for m in movies:
             self.cache.add(m)
-        self.cache.updated = False
         # Clear movies added before 200
-        self.cache.clear({"plex_movie_id": 8, "added_date": 200})
-        self.assertIn({"plex_movie_id": 7, "added_date": 100}, self.cache)
-        self.assertIn({"plex_movie_id": 8, "added_date": 200}, self.cache)
-        self.assertIn({"plex_movie_id": 9, "added_date": 300}, self.cache)
-        self.assertFalse(self.cache.updated)
+        self.cache.clear(movies[1])
+        self.assertIn(movies[0], self.cache)
+        self.assertIn(movies[1], self.cache)
+        self.assertIn(movies[2], self.cache)
 
     def test_items(self):
-        movie = {"plex_movie_id": 10, "added_date": 1000}
+        movie: Movie = {
+            "plex_movie_id": 1111,
+            "title": "Pris au piège - Caught Stealing",
+            "year": 2025,
+            "added_date": 100,
+            "release_date": "2025-08-27",
+            "director": ["Darren Aronofsky"],
+            "metadata_country": "fr",
+            "guid": None,
+            "tmdb_id": None,
+        }
         self.cache.add(movie)
         items = list(self.cache.items())
         self.assertEqual(len(items), 1)
         key, value = items[0]
-        self.assertEqual(key, 10)
+        self.assertEqual(key, 1111)
         self.assertEqual(value, movie)
 
-    def test_get_key(self):
-        movie = {"plex_movie_id": 11, "added_date": 1100}
-        self.assertEqual(self.cache.get_key(movie), 11)
+    def test_get_id(self):
+        movie: Movie = {
+            "plex_movie_id": 1111,
+            "title": "Pris au piège - Caught Stealing",
+            "year": 2025,
+            "added_date": 100,
+            "release_date": "2025-08-27",
+            "director": ["Darren Aronofsky"],
+            "metadata_country": "fr",
+            "guid": None,
+            "tmdb_id": None,
+        }
+        self.assertEqual(self.cache.get_id(movie), 1111)
 
 
 if __name__ == "__main__":
