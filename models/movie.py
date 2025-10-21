@@ -1,4 +1,6 @@
-from typing import TypedDict
+from typing import NotRequired, TypedDict
+
+from models.artworks import Artworks
 
 
 class Movie(TypedDict):
@@ -11,3 +13,4 @@ class Movie(TypedDict):
     metadata_country: str
     guid: str | None
     tmdb_id: int | None
+    artworks: NotRequired[Artworks]
