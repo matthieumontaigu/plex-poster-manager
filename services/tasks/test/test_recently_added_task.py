@@ -13,6 +13,7 @@ class TestRecentlyAddedTask(unittest.TestCase):
         # --- arrange ---------------------------------------------------------
         plex_manager = Mock()
         artworks_updater = Mock()
+        metadata_updater = Mock()
 
         # Use MagicMock so magic method __contains__ is available
         recent_cache = MagicMock(
@@ -48,6 +49,7 @@ class TestRecentlyAddedTask(unittest.TestCase):
         task = RecentlyAddedTask(
             plex_manager=plex_manager,
             artworks_updater=artworks_updater,
+            metadata_updater=metadata_updater,
             recently_added_cache=recent_cache,
             missing_artworks_cache=missing_cache,
             sleep_interval=0.0,
@@ -102,6 +104,17 @@ class TestRecentlyAddedTask(unittest.TestCase):
         missing_cache.load.assert_called_once()
         recent_cache.save.assert_called_once()
         missing_cache.save.assert_called_once()
+
+        # metadata updater should be called for matched movies only (first three)
+        self.assertEqual(metadata_updater.update_release_date.call_count, 3)
+        metadata_updater.update_release_date.assert_has_calls(
+            [
+                call(recently_added_movies[0]),
+                call(recently_added_movies[1]),
+                call(recently_added_movies[2]),
+            ],
+            any_order=False,
+        )
 
 
 if __name__ == "__main__":
