@@ -50,6 +50,7 @@ class ArtworksConfig(TypedDict):
     retriever: RetrieverConfig
     selector: SelectorConfig
     reverter: ReverterConfig
+    movies_sleep_interval: NotRequired[float]
 
 
 class ScheduleConfig(TypedDict):
@@ -92,6 +93,7 @@ if __name__ == "__main__":
     tmdb_requester = TMDBAPIRequester(tmdb_config["api_token"])
 
     artworks_config = config["artworks"]
+    sleep_interval = artworks_config.get("movies_sleep_interval", 1.0)
 
     selector_config = artworks_config["selector"]
     artworks_selector = ArtworksSelector(**selector_config)
@@ -105,6 +107,7 @@ if __name__ == "__main__":
         apple_provider,
         localizer,
         countries_priority,
+        retrieve_interval=sleep_interval / 10,
         fallback_logo_provider=logo_provider,
     )
 
@@ -129,10 +132,11 @@ if __name__ == "__main__":
         metadata_updater,
         recently_added_cache,
         missing_artworks_cache,
+        sleep_interval,
     )
 
     missing_artworks_task = MissingArtworksTask(
-        plex_manager, artworks_updater, missing_artworks_cache
+        plex_manager, artworks_updater, missing_artworks_cache, sleep_interval
     )
 
     reverter_config = artworks_config["reverter"]
