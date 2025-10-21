@@ -50,6 +50,17 @@ class Localizer:
         language = get_language_code(country)
         return self.get_language_title(movie_id, language)
 
+    def get_country_release_date(self, movie_id: int, country: str) -> str | None:
+        """
+        Retrieve the localized movie release date for a given country.
+
+        Args:
+            movie_id: TMDB movie ID.
+            country: Target country code (e.g. 'fr', 'us', 'de').
+        """
+        country_iso_3167 = country.upper()
+        return self.tmdb_api_requester.get_release_date(movie_id, country_iso_3167)
+
     def get_language_title(self, movie_id: int, language: str) -> str | None:
         """Fetch the localized movie title from TMDB for a given language."""
         return self.tmdb_api_requester.get_movie_title(movie_id, language)
