@@ -30,6 +30,7 @@ class ArtworksReverterTask:
         self.sleep_interval = 0.1  # seconds
 
     def run(self) -> None:
+        logger.info("▶ Reverting artworks for all movies...")
         movies = self.plex_manager.get_all_movies()
         movies_sorted = sorted(
             movies, key=lambda movie: movie["added_date"], reverse=True
