@@ -3,6 +3,9 @@ from typing import TypedDict, cast
 
 from bs4 import BeautifulSoup
 
+from client.google.scoring import ItemView
+from client.google.utils import parse_release_year
+
 
 class Person(TypedDict):
     type: str
@@ -18,6 +21,20 @@ class Attributes(TypedDict):
     director: list[Person]
     datePublished: str
     image: str
+
+
+def item_from_attributes(url: str, attributes: Attributes) -> ItemView:
+    directors = attributes["director"]
+    director = directors[0]["name"] if directors else None
+    date = attributes["datePublished"]
+    release_year = parse_release_year(date)
+
+    return ItemView(
+        url=url,
+        title=attributes["name"],
+        director=director,
+        release_year=release_year,
+    )
 
 
 def get_attributes(
