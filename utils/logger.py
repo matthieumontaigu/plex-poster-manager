@@ -14,9 +14,9 @@ COLORS = {
 }
 
 
-def setup_logging(log_path: str | None = None) -> None:
+def setup_logging(log_path: str | None = None, level: int | str = logging.INFO) -> None:
     logger = logging.getLogger()
-    logger.setLevel(logging.INFO)
+    logger.setLevel(level)
     record = "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
 
     logger.handlers = []
