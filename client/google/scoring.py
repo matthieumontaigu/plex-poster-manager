@@ -82,15 +82,17 @@ class Scorer:
             title_score = get_title_score(
                 target.title, item.title, self.title_threshold
             )
+            if title_score < 0:
+                return None
 
         year_score = 0.0
-        if target.year is not None and item.release_year is not None:
+        if item.release_year:
             year_score = get_year_score(target.year, item.release_year)
             if year_score < 0:
                 return None
 
         director_score = 0.0
-        if target.directors and item.director:
+        if item.director:
             director_score = get_director_score(target.directors, item.director)
             if director_score < 0:
                 return None
@@ -100,6 +102,8 @@ class Scorer:
 
 def get_title_score(target_title: str, title: str, threshold: float) -> float:
     similarity_score = similarity(target_title, title)
+    if similarity_score < 0.5:
+        return -1.0
     if similarity_score < threshold:
         return 0.0
     return similarity_score * 2.0
