@@ -23,7 +23,7 @@ GOOGLE_ENDPOINT = "https://www.googleapis.com/customsearch/v1"
 class SearchEngine:
     """
     Thin Google Programmable Search client for tv.apple.com.
-    - locale/entity-scoped queries only: site:tv.apple.com/{country}/{entity}
+    - country/entity-scoped queries only: site:tv.apple.com/{country}/{entity}
     - scoring/gating delegated to Scorer (easy to unit-test)
     """
 
@@ -64,7 +64,7 @@ class SearchEngine:
         country = self._normalize_country(country)
 
         target = TargetSpec(
-            title=title, directors=directors, year=year, locale=country, entity=entity
+            title=title, directors=directors, year=year, country=country, entity=entity
         )
         queries = self._build_queries(title, directors, country, entity)
 
