@@ -34,7 +34,13 @@ class CountryProvider:
 
         base_image = {"title": localized_title, **self.base_image}
 
-        search_args = (localized_title, movie["director"], movie["year"], self.country)
+        search_args = (
+            localized_title,
+            movie["director"],
+            movie["year"],
+            self.country,
+            "movie",
+        )
         poster_url, background_url, logo_url = self.provider.get_artworks(*search_args)
 
         poster = build_image(poster_url, **base_image)

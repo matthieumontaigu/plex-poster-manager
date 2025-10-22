@@ -10,5 +10,5 @@ class Provider(ABC):
 
     @abstractmethod
     def get_artworks(
-        self, title: str, directors: list[str], year: int, country: str
+        self, title: str, directors: list[str], year: int, country: str, entity: str
     ) -> tuple[str | None, str | None, str | None]: ...

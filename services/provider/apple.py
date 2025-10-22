@@ -27,7 +27,7 @@ class AppleProvider(Provider):
         directors: list[str],
         year: int,
         country: str,
-        entity: str = "movie",
+        entity: str,
     ) -> tuple[str | None, str | None, str | None]:
 
         apple_tv_url = self.search_engine.query(title, directors, year, country, entity)
