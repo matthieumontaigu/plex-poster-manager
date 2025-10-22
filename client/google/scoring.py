@@ -41,7 +41,7 @@ class TargetSpec:
     title: str
     directors: list[str]
     year: int
-    locale: str
+    country: str
     entity: str  # "movie" | "show"
 
 
@@ -74,7 +74,7 @@ class Scorer:
         if not f"/{target.entity}/" in path:
             return None
 
-        if not f"/{target.locale}/" in path:
+        if not f"/{target.country}/" in path:
             return None
 
         title_score = 0.0
@@ -135,7 +135,7 @@ def get_director_score(target_directors: list[str], director: str | None) -> flo
         target_norm = norm_text(target_director)
         if not target_norm:
             continue
-        if target_norm in director_norm or director_norm in target_norm:
+        if similarity(target_norm, director_norm) >= 0.9:
             return 1.0
 
     # Otherwise aggregate all targets into one string
@@ -174,12 +174,6 @@ def item_from_cse(raw: dict) -> ItemView:
     if raw_year := metatags.get("og:video:release_date"):
         release_year = parse_release_year(raw_year)
 
-    return ItemView(
-        url=url,
-        title=title,
-        director=director,
-        release_year=release_year,
-    )
     return ItemView(
         url=url,
         title=title,
