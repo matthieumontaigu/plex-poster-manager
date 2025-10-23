@@ -88,7 +88,9 @@ class TaskSchedulerService:
                 self._run_task(task)
                 task.reschedule()
                 heapq.heappush(self._heap, task)
-
+        except KeyboardInterrupt:
+            logger.info("KeyboardInterrupt -> stopping")
+            self.stop()
         except Exception:
             logger.exception("Scheduler crashed unexpectedly")
         finally:
