@@ -46,6 +46,7 @@ class MissingArtworksTask:
                 to_remove.append(movie)
                 continue
 
+            # Movie will have its TMDB ID already set in the cache
             current_artworks = movie.get("artworks")
             status, new_artworks = self.artworks_updater.update(movie, current_artworks)
 

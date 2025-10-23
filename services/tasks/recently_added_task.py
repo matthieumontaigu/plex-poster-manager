@@ -60,6 +60,7 @@ class RecentlyAddedTask:
                 )
                 continue
 
+            movie["tmdb_id"] = tmdb_id
             status, artworks = self.artworks_updater.update(movie, None)
 
             if status == "upload_failed":
