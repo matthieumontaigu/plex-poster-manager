@@ -126,7 +126,7 @@ if __name__ == "__main__":
         apple_provider,
         localizer,
         countries_priority,
-        retrieve_interval=sleep_interval / 10,
+        retrieve_interval=sleep_interval / 2,
         fallback_logo_provider=logo_provider,
     )
 
