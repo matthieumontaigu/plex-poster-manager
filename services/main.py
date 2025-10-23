@@ -69,6 +69,11 @@ class CacheConfig(TypedDict):
     retention_days: NotRequired[int]
 
 
+class LogConfig(TypedDict):
+    path: str
+    level: str
+
+
 class Config(TypedDict):
     plex: PlexConfig
     tmdb: TMDBConfig
@@ -76,7 +81,7 @@ class Config(TypedDict):
     artworks: ArtworksConfig
     schedules: dict[str, ScheduleConfig]
     cache: CacheConfig
-    log_path: str
+    log: LogConfig
 
 
 if __name__ == "__main__":
@@ -91,7 +96,8 @@ if __name__ == "__main__":
     config_path = args.config_path
     config = cast(Config, load_json_file(config_path))
 
-    setup_logging(config["log_path"])
+    log_config = config["log"]
+    setup_logging(log_config["path"], log_config["level"])
 
     plex_config = config["plex"]
     plex_manager = PlexManager(**plex_config)
