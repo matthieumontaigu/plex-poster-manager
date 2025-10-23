@@ -13,7 +13,9 @@ class Cache:
 
     def load(self) -> None:
         if Path(self.filepath).exists():
-            self.data = load_json_file(self.filepath)
+            self.data = {
+                int(key): value for key, value in load_json_file(self.filepath).items()
+            }
         else:
             self.data = {}
 
