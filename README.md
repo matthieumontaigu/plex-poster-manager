@@ -1,169 +1,163 @@
 # plex-poster-manager
 
-`plex-poster-manager` is a tool for managing and updating movie artworks (posters, backgrounds, logos) on a Plex server. It integrates with external APIs like TMDB and Apple TV to fetch and upload artworks.
+Tools and services to manage and update movie artworks (posters, backgrounds, logos) on a Plex server. It integrates with external sources like Apple TV and TMDB to fetch, select, and upload artworks, and can also localize metadata.
 
 ## Features
-- Fetch and upload posters, backgrounds, and logos for movies.
-- Update release dates for movies.
-- Handle missing artworks and recently added movies.
-- Batch and single movie artwork updates.
+- Fetch and upload posters, backgrounds, and logos for movies
+- Update and localize movie metadata (e.g., release dates)
+- Detect missing artworks and process recently added items
+- Run scheduled tasks or perform one-off updates from Apple TV links
 
 ---
 
 ## Installation
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/your-repo/plex-poster-manager.git
-   cd plex-poster-manager
-   ```
+1) Clone the repository
+```bash
+git clone https://github.com/your-repo/plex-poster-manager.git
+cd plex-poster-manager
+```
 
-2. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
+2) Install dependencies
+```bash
+pip install -r requirements.txt
+```
 
 ---
 
-## Usage
+## Configuration
 
-### Launch the Service
+Both the scheduler service and the Apple TV → Plex updater use a JSON config file. The top-level shape matches what `services/main.py` expects:
 
-To start the service and continuously update artworks:
-```bash
-python main.py --config-path /path/to/config.json
-```
-
-**Example Config File (`config.json`):**
 ```json
 {
-  "credentials": {
+  "plex": {
     "plex_url": "http://your-plex-server:32400",
     "plex_token": "your-plex-token",
-    "tmdb_api_key": "your-tmdb-api-key"
+    "metadata_country": "us",
+    "metadata_path": "/config/metadata"
+  },
+  "tmdb": {
+    "api_token": "your-tmdb-api-token"
+  },
+  "google": {
+    "api_key": "your-google-api-key",
+    "custom_search_id": "your-custom-search-id"
   },
   "artworks": {
-    "match_title": true,
-    "update_release_date": true,
-    "recent_update_interval": 3600,
-    "missing_artwork_interval": 86400
+    "retriever": {
+      "countries": ["us", "fr"]
+    },
+    "selector": {
+      "match_movie_title": true,
+      "match_logo_poster": true,
+      "target_source": "apple_tv"
+    },
+    "reverter": {
+      "artworks_types": ["poster", "background", "logo"]
+    },
+    "movies_sleep_interval": 1.0
   },
-  "storage": {
+  "schedules": {
+    "recently_added": { "type": "interval", "params": [3600] },
+    "missing_artworks": { "type": "interval", "params": [86400] },
+    "artworks_reverter": { "type": "interval", "params": [43200] }
+  },
+  "cache": {
     "cache_path": "./cache",
-    "log_path": "./logs"
+    "retention_days": 7
+  },
+  "log": {
+    "path": "./logs/plex-poster-manager.log",
+    "level": "INFO"
   }
 }
 ```
 
----
-
-### Using `ArtworksUpdater`
-
-`ArtworksUpdater` is responsible for fetching and updating artworks for a specific movie.
-
-**Example:**
-```python
-from client.plex.manager import PlexManager
-from services.artworks_updater import ArtworksUpdater
-from services.metadata_manager import MetadataManager
-
-plex_manager = PlexManager("http://your-plex-server:32400", "your-plex-token")
-metadata_manager = MetadataManager(tmdb_api_requester)
-
-artworks_updater = ArtworksUpdater(
-    plex_manager,
-    metadata_manager,
-    plex_country="us",
-    countries=["us", "fr"],
-    match_title=True,
-    update_release_date=True,
-    api_call_interval=1.0
-)
-
-movie = {
-    "plex_movie_id": 12345,
-    "title": "Inception",
-    "release_date": "2010-07-16"
-}
-
-is_missing, artworks = artworks_updater.update_artworks(movie)
-if is_missing:
-    print(f"Missing artworks for {movie['title']}")
-else:
-    print(f"Artworks updated for {movie['title']}")
-```
+Notes
+- Schedules: type and params are passed to the internal scheduler (e.g., interval in seconds). Adjust to your needs.
+- Only the `plex` section is required by the Apple TV → Plex updater tool.
 
 ---
 
-### Using `PlexManager`
+## Run the scheduler service (services/main.py)
 
-`PlexManager` provides methods to interact with the Plex server, such as fetching movies and uploading artworks.
+Starts the long-running tasks (recently added, missing artworks, revert), using the config above.
 
-**Example:**
-```python
-from client.plex.manager import PlexManager
-
-plex_manager = PlexManager("http://your-plex-server:32400", "your-plex-token")
-
-# Fetch all movies
-all_movies = plex_manager.get_all_movies()
-print(f"Found {len(all_movies)} movies on Plex.")
-
-# Upload a poster
-plex_movie_id = 12345
-poster_url = "https://example.com/poster.jpg"
-success = plex_manager.upload_poster(plex_movie_id, poster_url)
-if success:
-    print("Poster uploaded successfully!")
-else:
-    print("Failed to upload poster.")
-```
-
----
-
-## Batch Editing
-
-To perform batch edits on movies:
 ```bash
-python tools/batch.py --plex-url http://your-plex-server:32400 \
-                      --plex-token your-plex-token \
-                      --tmdb-api-key your-tmdb-api-key \
-                      --date-from 1609459200 \
-                      --number-of-edits 10
+python services/main.py --config-path /path/to/config.json
+```
+
+What it does
+- Instantiates Plex, TMDB, and Google clients
+- Retrieves artworks (Apple TV, TMDB), selects the best match, uploads to Plex
+- Updates metadata and runs on the schedule you configure
+
+---
+
+## One-off Apple TV → Plex updater (tools/plex_updater.py)
+
+Upload poster/background/logo for a single Plex item by pointing to an Apple TV title page.
+
+### CLI usage
+```bash
+python tools/plex_updater.py \
+  --config-path /path/to/config.json \
+  --plex-url "https://app.plex.tv/desktop#!/server/<server-id>/details?key=metadata%2F123456&..." \
+  --apple-url "https://tv.apple.com/<locale>/movie/<slug>/<id>"
+```
+
+Behavior
+- Extracts poster, background, and logo from the Apple TV page
+- Uploads any that are found to the Plex item derived from the Plex URL
+- Logging is controlled by your config (see `log` section)
+
+URL tips
+- The Plex URL must contain the encoded metadata key (e.g., `metadata%2F123456&…`). The tool extracts the numeric ID from there.
+
+### Programmatic usage
+```python
+from utils.file_utils import load_json_file
+from client.plex.manager import PlexManager
+from tools.plex_updater import PlexUpdater
+
+config = load_json_file("/path/to/config.json")
+plex_manager = PlexManager(**config["plex"])  # expects keys: plex_url, plex_token, metadata_country, metadata_path
+
+plex_url = "https://app.plex.tv/desktop#!/server/<server-id>/details?key=metadata%2F123456&X-Plex-Token=<token>"
+apple_tv_url = "https://tv.apple.com/us/movie/inception/tt123456789"
+
+updater = PlexUpdater(plex_manager)
+# All three booleans default to True; set to False to skip an asset type
+updater.update(plex_url, apple_tv_url, poster=True, background=True, logo=True)
+
+# You can also upload only a known logo URL to a Plex item
+updater.upload_logo_from_url(plex_url, "https://example.com/logo.png")
 ```
 
 ---
 
-## Single Movie Updates
+## Batch editing
 
-To update artworks for a single movie:
-```python
-from tools.single import PlexUploader
-from client.plex.manager import PlexManager
-
-plex_manager = PlexManager("http://your-plex-server:32400", "your-plex-token")
-uploader = PlexUploader(plex_manager)
-
-plex_url = "http://your-plex-server/web/index.html#!/server/12345/details?key=metadata%2F67890"
-apple_tv_url = "https://tv.apple.com/movie/inception"
-
-uploader.upload_apple_tv_from_url(plex_url, apple_tv_url)
+There is also a small batch helper script for bulk operations:
+```bash
+python tools/batch.py --help
 ```
 
 ---
 
 ## Logging
 
-Logs are stored in the path specified in the `log_path` field of the config file. Use these logs to debug or monitor the service.
+Logs use the `log.path` and `log.level` from your config. Ensure the directory exists or is creatable by the process.
 
 ---
 
 ## Contributing
 
-Feel free to submit issues or pull requests to improve the project.
+Issues and PRs are welcome.
 
 ---
 
 ## License
 
-This project is licensed under the MIT License.
+MIT License
