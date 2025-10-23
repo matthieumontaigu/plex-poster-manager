@@ -51,17 +51,17 @@ class PlexAPIRequester:
             )
         return IMAGES_MAPPING[image_type]
 
-    def get_images(self, movie_id: int, image_type: str) -> Response | None:
+    def get_images(self, id: int, image_type: str) -> Response | None:
         """Get images of a specific type for a movie."""
         image_type = self.get_image_type(image_type)
-        endpoint = f"library/metadata/{movie_id}/{image_type}"
+        endpoint = f"library/metadata/{id}/{image_type}"
 
         response = self.get(endpoint, {})
         return response
 
-    def upload_image(self, movie_id: int, image_type: str, image_url: str) -> bool:
+    def upload_image(self, id: int, image_type: str, image_url: str) -> bool:
         image_type = self.get_image_type(image_type)
-        endpoint = f"library/metadata/{movie_id}/{image_type}"
+        endpoint = f"library/metadata/{id}/{image_type}"
         params = {"url": image_url}
 
         response = self.post(endpoint, params)
@@ -69,24 +69,18 @@ class PlexAPIRequester:
             return False
         return response.status_code == 200
 
-    def upload_poster(self, movie_id: int, poster_url: str) -> bool:
-        """Upload a poster for a movie."""
-        return self.upload_image(movie_id, "poster", poster_url)
+    def upload_poster(self, id: int, poster_url: str) -> bool:
+        return self.upload_image(id, "poster", poster_url)
 
-    def upload_background(self, movie_id: int, background_url: str) -> bool:
-        """Upload a background for a movie."""
-        return self.upload_image(movie_id, "background", background_url)
+    def upload_background(self, id: int, background_url: str) -> bool:
+        return self.upload_image(id, "background", background_url)
 
-    def upload_logo(self, movie_id: int, logo_url: str) -> bool:
-        """Upload a logo for a movie."""
-        return self.upload_image(movie_id, "logo", logo_url)
+    def upload_logo(self, id: int, logo_url: str) -> bool:
+        return self.upload_image(id, "logo", logo_url)
 
-    def upload_image_file(
-        self, movie_id: int, image_type: str, image_file_path: str
-    ) -> bool:
-        """Upload an image file for a movie."""
+    def upload_image_file(self, id: int, image_type: str, image_file_path: str) -> bool:
         image_type = self.get_image_type(image_type)
-        endpoint = f"library/metadata/{movie_id}/{image_type}"
+        endpoint = f"library/metadata/{id}/{image_type}"
         with open(image_file_path, "rb") as f:
             image_data = f.read()
 
@@ -95,9 +89,9 @@ class PlexAPIRequester:
             return False
         return response.status_code == 200
 
-    def update_release_date(self, movie_id: int, release_date: str) -> bool:
+    def update_release_date(self, id: int, release_date: str) -> bool:
         """Update the release date for a movie."""
-        endpoint = f"library/metadata/{movie_id}"
+        endpoint = f"library/metadata/{id}"
         params = {
             "originallyAvailableAt": release_date,
         }

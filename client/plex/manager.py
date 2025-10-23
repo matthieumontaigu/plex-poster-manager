@@ -40,24 +40,20 @@ class PlexManager:
             return []
         return parse_movies(api_response, self.country)
 
-    def upload_image(self, plex_movie_id: int, image_type: str, image_url: str):
-        return self.api_requester.upload_image(plex_movie_id, image_type, image_url)
+    def upload_image(self, id: int, image_type: str, image_url: str):
+        return self.api_requester.upload_image(id, image_type, image_url)
 
-    def upload_poster(self, plex_movie_id: int, poster_url: str) -> bool:
-        return self.api_requester.upload_poster(plex_movie_id, poster_url)
+    def upload_poster(self, id: int, poster_url: str) -> bool:
+        return self.api_requester.upload_poster(id, poster_url)
 
-    def upload_background(self, movie_id: int, background_url: str) -> bool:
-        return self.api_requester.upload_background(movie_id, background_url)
+    def upload_background(self, id: int, background_url: str) -> bool:
+        return self.api_requester.upload_background(id, background_url)
 
-    def upload_logo(self, movie_id: int, logo_url: str) -> bool:
-        return self.api_requester.upload_logo(movie_id, logo_url)
+    def upload_logo(self, id: int, logo_url: str) -> bool:
+        return self.api_requester.upload_logo(id, logo_url)
 
-    def upload_image_file(
-        self, movie_id: int, image_type: str, image_file_path: str
-    ) -> bool:
-        return self.api_requester.upload_image_file(
-            movie_id, image_type, image_file_path
-        )
+    def upload_image_file(self, id: int, image_type: str, image_file_path: str) -> bool:
+        return self.api_requester.upload_image_file(id, image_type, image_file_path)
 
     def update_release_date(self, movie_id: int, release_date: str) -> bool:
         return self.api_requester.update_release_date(movie_id, release_date)
@@ -85,8 +81,8 @@ class PlexManager:
         metadata = self.get_metadata(movie_id)
         return metadata["guid"] if metadata else None
 
-    def get_bundle_id(self, movie_id: int) -> str | None:
-        plex_guid = self.get_plex_guid(movie_id)
+    def get_bundle_id(self, id: int) -> str | None:
+        plex_guid = self.get_plex_guid(id)
         if not plex_guid:
             return None
         bundle_hash = hashlib.sha1(plex_guid.encode("utf-8")).hexdigest()
@@ -100,8 +96,8 @@ class PlexManager:
         bundle_folder = bundle_id[1:]
         return f"{self.metadata_path}/Movies/{subfolder}/{bundle_folder}.bundle"
 
-    def get_images(self, movie_id: int, image_type: str) -> list[PlexImage]:
-        api_response = self.api_requester.get_images(movie_id, image_type)
+    def get_images(self, id: int, image_type: str) -> list[PlexImage]:
+        api_response = self.api_requester.get_images(id, image_type)
         if api_response is None:
             return []
 
