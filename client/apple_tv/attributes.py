@@ -67,12 +67,12 @@ def get_attributes(
 def _select_jsonld_by_id(page: BeautifulSoup, id_value: str):
     # Escape the colon in CSS selector
     return page.select_one(
-        f'script#{id_value.replace(":", "\\:")}[type="application/ld+json"]'
+        f"script#{id_value.replace(':', '\\:')}[type='application/ld+json']"
     )
 
 
 def _iter_all_jsonld(page: BeautifulSoup):
-    return page.select('script[type="application/ld+json"]')
+    return page.select("script[type='application/ld+json']")
 
 
 def _parse_jsonld(tag) -> dict | list | None:
