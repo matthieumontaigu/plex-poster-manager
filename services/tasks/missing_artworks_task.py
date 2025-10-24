@@ -36,7 +36,6 @@ class MissingArtworksTask:
         self.cache = missing_artworks_cache
 
     def run(self) -> None:
-        logger.info("▶ Updating missing artworks...")
         self.cache.load()
 
         to_remove = []
@@ -51,21 +50,20 @@ class MissingArtworksTask:
             status, new_artworks = self.artworks_updater.update(movie, current_artworks)
 
             if status == "success":
-                logger.info(f"✅ Completed artworks for {movie['title']}")
+                logger.info(f"✓ Complete artworks found for {movie['title']}")
                 to_remove.append(movie)
 
             elif status == "upload_failed":
-                logger.warning(f"⚠️ Upload failed for {movie['title']}")
+                logger.warning(f"✗ Upload failed for {movie['title']}")
 
             elif status == "unchanged_artworks":
-                logger.info(f"No changes for {movie['title']}")
+                logger.info(f"⚠ No changes for {movie['title']}")
 
             elif status == "imperfect_artworks":
                 movie["artworks"] = new_artworks
-                logger.info(f"Incomplete artworks remain for {movie['title']}")
+                logger.info(f"⚠ Incomplete artworks remain for {movie['title']}")
 
             time.sleep(self.sleep_interval)
 
         self.cache.remove_all(to_remove)
         self.cache.save()
-        logger.info("✓ Finished updating missing artworks")

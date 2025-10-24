@@ -116,12 +116,11 @@ class TaskSchedulerService:
 
     def _run_task(self, task: _ScheduledTask) -> None:
         start = time.time()
-        start_dt = datetime.fromtimestamp(start).isoformat(timespec="seconds")
-        logger.info(f"▶ Running task '{task.name}' at {start_dt}")
+        logger.info(f"▶ Running task '{task.name}'")
         try:
             task.run()
         except Exception:
             logger.exception(f"Task '{task.name}' failed")
         finally:
             duration = time.time() - start
-            logger.info(f"✓ Finished '{task.name}' in {duration:.2f}s")
+            logger.info(f"⏹ Finished '{task.name}' in {duration:.2f}s")

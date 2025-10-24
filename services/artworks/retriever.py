@@ -53,7 +53,7 @@ class ArtworksRetriever:
         }
 
         for country_provider in self.countries_providers:
-            logger.info(
+            logger.debug(
                 f"Fetching {country_provider.country.upper()} artworks for '{movie['title']}'"
             )
             poster, background, logo = country_provider.get_artworks(movie)
@@ -82,7 +82,7 @@ class ArtworksRetriever:
 
         artworks[artwork_name] = new_image
         logger.info(
-            f"Found {new_image['source']} {new_image['country'].upper()} {artwork_name} from  for '{new_image['title']}'"
+            f"→ Found {new_image['source']} {new_image['country'].upper()} {artwork_name} for '{new_image['title']}'"
         )
         return None
 

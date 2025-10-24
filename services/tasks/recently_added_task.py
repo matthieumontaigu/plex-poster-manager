@@ -40,7 +40,6 @@ class RecentlyAddedTask:
         self.missing_cache = missing_artworks_cache
 
     def run(self) -> None:
-        logger.info("▶ Updating artworks for recently added movies...")
         self.recent_cache.load()
         self.missing_cache.load()
 
@@ -64,18 +63,18 @@ class RecentlyAddedTask:
             status, artworks = self.artworks_updater.update(movie, None)
 
             if status == "upload_failed":
-                logger.warning(f"⚠️ Upload failed for {movie['title']}")
+                logger.warning(f"✗ Upload failed for {movie['title']}")
 
             if status == "imperfect_artworks":
                 self.recent_cache.add(movie)
                 movie_with_artworks = movie.copy()
                 movie_with_artworks["artworks"] = artworks
                 self.missing_cache.add(movie_with_artworks)
-                logger.info(f"⚠️ Incomplete artworks found for {movie['title']}")
+                logger.info(f"⚠ Incomplete artworks found for {movie['title']}")
 
             if status == "success":
                 self.recent_cache.add(movie)
-                logger.info(f"✅ Completed artworks for {movie['title']}")
+                logger.info(f"✓ Complete artworks found for {movie['title']}")
 
             self.metadata_updater.update_release_date(movie)
 
@@ -87,5 +86,3 @@ class RecentlyAddedTask:
 
         self.recent_cache.save()
         self.missing_cache.save()
-
-        logger.info("✓ Finished updating artworks for recently added movies")
