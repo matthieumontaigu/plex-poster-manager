@@ -57,24 +57,44 @@ if __name__ == "__main__":
 
     setup_logging()
 
-    parser = argparse.ArgumentParser(
-        description="Update Plex item images from Apple TV."
+    parser = argparse.ArgumentParser(description="Update Plex item images.")
+
+    subparsers = parser.add_subparsers(dest="command", required=True, help="Commands")
+
+    # Apple subparser
+    apple_parser = subparsers.add_parser(
+        "apple", help="Update Plex item images from Apple TV"
     )
-    parser.add_argument(
+    apple_parser.add_argument(
         "--config-path", type=str, required=True, help="Path to config file"
     )
-    parser.add_argument("--plex-url", type=str, required=True, help="Plex item URL")
-    parser.add_argument(
+    apple_parser.add_argument(
+        "--plex-url", type=str, required=True, help="Plex item URL"
+    )
+    apple_parser.add_argument(
         "--apple-url", type=str, required=True, help="Apple TV item URL"
+    )
+
+    # Logo subparser
+    logo_parser = subparsers.add_parser(
+        "logo", help="Upload logo from URL to Plex item"
+    )
+    logo_parser.add_argument(
+        "--config-path", type=str, required=True, help="Path to config file"
+    )
+    logo_parser.add_argument(
+        "--plex-url", type=str, required=True, help="Plex item URL"
+    )
+    logo_parser.add_argument(
+        "--logo-url", type=str, required=True, help="Logo image URL"
     )
 
     args = parser.parse_args()
     config = load_json_file(args.config_path)
-    plex_config = config["plex"]
-    plex_manager = PlexManager(**plex_config)
-
-    plex_url = args.plex_url
-    apple_tv_url = args.apple_url
-
+    plex_manager = PlexManager(**config["plex"])
     plex_updater = PlexUpdater(plex_manager)
-    plex_updater.update(plex_url, apple_tv_url)
+
+    if args.command == "apple":
+        plex_updater.update(args.plex_url, args.apple_url)
+    elif args.command == "logo":
+        plex_updater.upload_logo_from_url(args.plex_url, args.logo_url)
