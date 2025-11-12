@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from client.plex.manager import PlexManager
+    from models.movie import Movie
     from services.artworks.updater import ArtworksUpdater
     from services.metadata.updater import MetadataUpdater
     from storage.movies_cache import MoviesCache
@@ -49,35 +50,7 @@ class RecentlyAddedTask:
             return
 
         for movie in recently_added_movies:
-            if movie in self.recent_cache:
-                continue
-
-            tmdb_id = self.plex_manager.get_tmdb_id(movie["plex_movie_id"])
-            if not tmdb_id:
-                logger.warning(
-                    f"Movie {movie['title']} is not matched in TMDB. Skipping it for now."
-                )
-                continue
-
-            movie["tmdb_id"] = tmdb_id
-            status, artworks = self.artworks_updater.update(movie, None)
-
-            if status == "upload_failed":
-                logger.warning(f"✗ Upload failed for {movie['title']}")
-
-            if status == "imperfect_artworks":
-                self.recent_cache.add(movie)
-                movie_with_artworks = movie.copy()
-                movie_with_artworks["artworks"] = artworks
-                self.missing_cache.add(movie_with_artworks)
-                logger.info(f"⚠ Incomplete artworks found for {movie['title']}")
-
-            if status == "success":
-                self.recent_cache.add(movie)
-                logger.info(f"✓ Complete artworks found for {movie['title']}")
-
-            self.metadata_updater.update_release_date(movie)
-
+            self.process_movie(movie)
             time.sleep(self.sleep_interval)
 
         # Trim cache so only the most recent movies remain relevant
@@ -86,3 +59,37 @@ class RecentlyAddedTask:
 
         self.recent_cache.save()
         self.missing_cache.save()
+
+    def process_movie(self, movie: Movie) -> None:
+        if movie in self.recent_cache:
+            return
+
+        tmdb_id = self.plex_manager.get_tmdb_id(movie["plex_movie_id"])
+        if not tmdb_id:
+            logger.warning(
+                f"Movie {movie['title']} is not matched in TMDB. Skipping it for now."
+            )
+            return
+
+        movie["tmdb_id"] = tmdb_id
+        status, artworks = self.artworks_updater.update(movie, None)
+
+        if status == "upload_failed":
+            logger.warning(f"✗ Upload failed for {movie['title']}")
+            return
+
+        self.metadata_updater.update_release_date(movie)
+        self.recent_cache.add(movie)
+
+        if status == "success":
+            logger.info(f"✓ Complete artworks found for {movie['title']}")
+            return
+
+        movie_with_artworks = movie.copy()
+        movie_with_artworks["artworks"] = artworks
+        self.missing_cache.add(movie_with_artworks)
+
+        if status == "empty_artworks":
+            logger.info(f"⚠ No artworks found for {movie['title']}")
+        elif status == "imperfect_artworks":
+            logger.info(f"⚠ Incomplete artworks found for {movie['title']}")

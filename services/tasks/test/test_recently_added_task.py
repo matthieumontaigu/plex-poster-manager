@@ -29,6 +29,7 @@ class TestRecentlyAddedTask(unittest.TestCase):
             {"title": "Movie 2", "plex_movie_id": 2},
             {"title": "Movie 3", "plex_movie_id": 3},
             {"title": "Movie 4", "plex_movie_id": 4},  # unmatched → skipped
+            {"title": "Movie 5", "plex_movie_id": 5},
         ]
         plex_manager.get_recently_added_movies.return_value = recently_added_movies
 
@@ -37,6 +38,7 @@ class TestRecentlyAddedTask(unittest.TestCase):
             "2222",  # Movie 2
             "3333",  # Movie 3
             None,  # Movie 4 (unmatched)
+            "5555",  # Movie 5
         ]
 
         # ArtworksUpdater.update returns (status, artworks)
@@ -44,6 +46,7 @@ class TestRecentlyAddedTask(unittest.TestCase):
             ("success", ["artwork1"]),  # Movie 1
             ("imperfect_artworks", ["artwork2"]),  # Movie 2
             ("upload_failed", ["artwork3"]),  # Movie 3
+            ("empty_artworks", None),  # Movie 5
         ]
 
         task = RecentlyAddedTask(
@@ -67,17 +70,19 @@ class TestRecentlyAddedTask(unittest.TestCase):
                 call(recently_added_movies[1]["plex_movie_id"]),
                 call(recently_added_movies[2]["plex_movie_id"]),
                 call(recently_added_movies[3]["plex_movie_id"]),
+                call(recently_added_movies[4]["plex_movie_id"]),
             ],
             any_order=False,
         )
 
         # Artworks updater called for first three (matched)
-        self.assertEqual(artworks_updater.update.call_count, 3)
+        self.assertEqual(artworks_updater.update.call_count, 4)
         artworks_updater.update.assert_has_calls(
             [
                 call(recently_added_movies[0], None),
                 call(recently_added_movies[1], None),
                 call(recently_added_movies[2], None),
+                call(recently_added_movies[4], None),
             ],
             any_order=False,
         )
@@ -88,13 +93,23 @@ class TestRecentlyAddedTask(unittest.TestCase):
         self.assertIn(recently_added_movies[1], recent_added_calls)  # imperfect
         self.assertNotIn(recently_added_movies[2], recent_added_calls)  # upload_failed
         self.assertNotIn(recently_added_movies[3], recent_added_calls)  # unmatched
+        self.assertIn(recently_added_movies[4], recent_added_calls)  # empty
 
-        # missing_artworks_cache.add called exactly once for the imperfect case
-        self.assertEqual(missing_cache.add.call_count, 1)
-        added_to_missing = missing_cache.add.call_args.args[0]
-        self.assertEqual(added_to_missing["title"], "Movie 2")
-        self.assertEqual(added_to_missing["plex_movie_id"], 2)
-        self.assertEqual(added_to_missing["artworks"], ["artwork2"])
+        # missing_artworks_cache.add called twice for the imperfect and empty cases
+        missing_calls = missing_cache.add.call_args_list
+        self.assertEqual(len(missing_calls), 2)
+
+        # First call should be Movie 2 (imperfect_artworks)
+        first_call_args = missing_calls[0].args[0]
+        self.assertEqual(first_call_args["title"], "Movie 2")
+        self.assertEqual(first_call_args["plex_movie_id"], 2)
+        self.assertEqual(first_call_args["artworks"], ["artwork2"])
+
+        # Second call should be Movie 5 (empty_artworks)
+        second_call_args = missing_calls[1].args[0]
+        self.assertEqual(second_call_args["title"], "Movie 5")
+        self.assertEqual(second_call_args["plex_movie_id"], 5)
+        self.assertEqual(second_call_args["artworks"], None)
 
         # recent cache clear called with last movie
         recent_cache.clear.assert_called_once_with(recently_added_movies[-1])
@@ -105,13 +120,13 @@ class TestRecentlyAddedTask(unittest.TestCase):
         recent_cache.save.assert_called_once()
         missing_cache.save.assert_called_once()
 
-        # metadata updater should be called for matched movies only (first three)
+        # metadata updater should be called for matched movies only and not upload failed
         self.assertEqual(metadata_updater.update_release_date.call_count, 3)
         metadata_updater.update_release_date.assert_has_calls(
             [
                 call(recently_added_movies[0]),
                 call(recently_added_movies[1]),
-                call(recently_added_movies[2]),
+                call(recently_added_movies[4]),
             ],
             any_order=False,
         )
