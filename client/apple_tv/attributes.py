@@ -24,7 +24,7 @@ class Attributes(TypedDict):
 
 
 def item_from_attributes(url: str, attributes: Attributes) -> ItemView:
-    directors = attributes["director"]
+    directors = attributes.get("director")
     director = directors[0]["name"] if directors else None
     date = attributes["datePublished"]
     release_year = parse_release_year(date)
