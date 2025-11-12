@@ -59,6 +59,9 @@ class MissingArtworksTask:
             elif status == "unchanged_artworks":
                 logger.info(f"⚠ No changes for {movie['title']}")
 
+            elif status == "empty_artworks":
+                logger.info(f"⚠ No artworks found for {movie['title']}")
+
             elif status == "imperfect_artworks":
                 movie["artworks"] = new_artworks
                 logger.info(f"⚠ Incomplete artworks remain for {movie['title']}")
