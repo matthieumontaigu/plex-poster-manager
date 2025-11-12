@@ -112,6 +112,15 @@ class ArtworksSelector:
 
         return fallback_logo
 
+    def are_empty(self, artworks: Artworks) -> bool:
+        """
+        Check if all artwork types are None.
+        """
+        return all(
+            artworks[image_type] is None
+            for image_type in ("poster", "background", "logo")
+        )
+
     def are_perfect(self, artworks: Artworks, movie: Movie) -> bool:
         """
         Check if all artworks are from the perfect source and match the movie's metadata country.

@@ -61,6 +61,9 @@ class ArtworksUpdater:
         if not uploaded:
             return "upload_failed", new_artworks
 
+        if self.selector.are_empty(new_artworks):
+            return "empty_artworks", new_artworks
+
         if not self.selector.are_perfect(new_artworks, movie):
             return "imperfect_artworks", new_artworks
 
