@@ -8,4 +8,3 @@ class Target:
     year: int
     country: str
     entity: str  # "movie" | "show"
-    entity: str  # "movie" | "show"

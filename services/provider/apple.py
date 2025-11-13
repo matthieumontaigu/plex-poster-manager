@@ -29,13 +29,7 @@ class AppleProvider(Provider):
         entity: str,
     ) -> tuple[str | None, str | None, str | None]:
 
-        target = Target(
-            title=title,
-            directors=directors,
-            year=year,
-            country=country,
-            entity=entity,
-        )
+        target = Target(title, directors, year, country, entity)
         apple_tv_url = self.search_engine.query(target)
         if not apple_tv_url:
             return None, None, None
