@@ -1,15 +1,18 @@
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
-from client.google.utils import (
-    clean_title,
-    extract_path,
-    norm_text,
-    parse_release_year,
-    similarity,
-)
+from client.apple_tv.attributes import Attributes, get_attributes
+from client.google.parser import parse_item_from_apple_tv_attributes
+from client.google.utils import extract_path, norm_text, similarity
+
+if TYPE_CHECKING:
+    from client.google.parser import ItemView
+    from models.target import Target
+
+STRONG_SCORE = 4.0  # 2.0 for title match, 1.0 for director, 1.0 for year
+REQUIRED_SCORE = 1.9  # at least a title match at 95% or matching director and year
 
 DISALLOWED_RE = re.compile(
     "|".join(
@@ -26,27 +29,6 @@ DISALLOWED_RE = re.compile(
 )
 
 CANONICAL_RE = re.compile(r"^/([a-z]{2,3})/(show|movie)/.+/umc\.cm[cp]\.[\w.]+/?$")
-
-
-@dataclass(slots=True)
-class ItemView:
-    url: str
-    title: str | None
-    director: str | None
-    release_year: int | None
-
-
-@dataclass(slots=True)
-class TargetSpec:
-    title: str
-    directors: list[str]
-    year: int
-    country: str
-    entity: str  # "movie" | "show"
-
-
-STRONG_SCORE = 4.0  # 2.0 for title match, 1.0 for director, 1.0 for year
-REQUIRED_SCORE = 1.9  # at least a title match at 95% or matching director and year
 
 
 class Scorer:
@@ -66,7 +48,7 @@ class Scorer:
             return False
         return not DISALLOWED_RE.search(extract_path(url))
 
-    def compute(self, item: ItemView, target: TargetSpec) -> float | None:
+    def compute(self, item: ItemView, target: Target) -> float | None:
         path = extract_path(item.url)
         if not CANONICAL_RE.match(path):
             return None
@@ -77,27 +59,52 @@ class Scorer:
         if not f"/{target.country}/" in path:
             return None
 
-        title_score = 0.0
-        if item.title:
-            title_score = get_title_score(
-                target.title, item.title, self.title_threshold
-            )
-            if title_score < 0:
-                return None
+        title_score, director_score, year_score = get_scores(
+            item, target, self.title_threshold
+        )
 
-        year_score = 0.0
-        if item.release_year:
-            year_score = get_year_score(target.year, item.release_year)
-            if year_score < 0:
-                return None
+        if (
+            target.country == "us"
+            and item.lang == "es"
+            and director_score == 1.0
+            and year_score == 1.0
+        ):
+            attributes = get_attributes(item.url)
+            return self.score_attributes(item.url, attributes, target)
 
-        director_score = 0.0
-        if item.director:
-            director_score = get_director_score(target.directors, item.director)
-            if director_score < 0:
-                return None
+        if director_score < 0.0 or year_score < 0.0 or title_score < 0.0:
+            return None
 
         return title_score + director_score + year_score
+
+    def score_attributes(
+        self,
+        url: str,
+        attributes: Attributes | None,
+        target: Target,
+    ) -> float | None:
+        if not attributes:
+            return None
+
+        item = parse_item_from_apple_tv_attributes(url, attributes)
+        return self.compute(item, target)
+
+
+def get_scores(
+    item: ItemView, target: Target, title_threshold: float
+) -> tuple[float, float, float]:
+    title_score, year_score, director_score = 0.0, 0.0, 0.0
+
+    if item.title:
+        title_score = get_title_score(target.title, item.title, title_threshold)
+
+    if item.release_year:
+        year_score = get_year_score(target.year, item.release_year)
+
+    if item.director:
+        director_score = get_director_score(target.directors, item.director)
+
+    return title_score, director_score, year_score
 
 
 def get_title_score(target_title: str, title: str, threshold: float) -> float:
@@ -147,40 +154,3 @@ def get_director_score(target_directors: list[str], director: str | None) -> flo
     sim = similarity(target_combined, director_norm)
 
     return -1.0 if sim < 0.5 else 0.0
-
-
-# ---------------- helper to build ItemView from CSE raw ----------------
-
-
-def item_from_cse(raw: dict) -> ItemView:
-    url = (raw.get("link") or "").split("#", 1)[0].split("?", 1)[0]
-
-    metatags = {}
-    try:
-        meta_list = raw.get("pagemap", {}).get("metatags", [])
-        if meta_list:
-            metatags = dict(meta_list[0])
-    except Exception:
-        pass
-
-    apple_title = metatags.get("apple:title")
-    page_title = raw.get("title")
-    if apple_title:
-        title = apple_title
-    elif page_title:
-        title = clean_title(page_title)
-    else:
-        title = None
-
-    director = metatags.get("og:video:director") or None
-
-    release_year = None
-    if raw_year := metatags.get("og:video:release_date"):
-        release_year = parse_release_year(raw_year)
-
-    return ItemView(
-        url=url,
-        title=title,
-        director=director,
-        release_year=release_year,
-    )
