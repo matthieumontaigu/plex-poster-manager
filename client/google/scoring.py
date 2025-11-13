@@ -59,9 +59,9 @@ class Scorer:
         if not f"/{target.country}/" in path:
             return None
 
-        title_score, director_score, year_score = get_scores(
-            item, target, self.title_threshold
-        )
+        title_score = get_title_score(target.title, item.title, self.title_threshold)
+        director_score = get_director_score(target.directors, item.director)
+        year_score = get_year_score(target.year, item.release_year)
 
         if (
             target.country == "us"
@@ -72,7 +72,7 @@ class Scorer:
             attributes = get_attributes(item.url)
             return self.score_attributes(item.url, attributes, target)
 
-        if director_score < 0.0 or year_score < 0.0 or title_score < 0.0:
+        if title_score < 0.0 or director_score < 0.0 or year_score < 0.0:
             return None
 
         return title_score + director_score + year_score
@@ -90,24 +90,10 @@ class Scorer:
         return self.compute(item, target)
 
 
-def get_scores(
-    item: ItemView, target: Target, title_threshold: float
-) -> tuple[float, float, float]:
-    title_score, year_score, director_score = 0.0, 0.0, 0.0
+def get_title_score(target_title: str, title: str | None, threshold: float) -> float:
+    if not title:
+        return 0.0
 
-    if item.title:
-        title_score = get_title_score(target.title, item.title, title_threshold)
-
-    if item.release_year:
-        year_score = get_year_score(target.year, item.release_year)
-
-    if item.director:
-        director_score = get_director_score(target.directors, item.director)
-
-    return title_score, director_score, year_score
-
-
-def get_title_score(target_title: str, title: str, threshold: float) -> float:
     similarity_score = similarity(target_title, title)
     if similarity_score < 0.5:
         return -1.0
@@ -116,7 +102,9 @@ def get_title_score(target_title: str, title: str, threshold: float) -> float:
     return similarity_score * 2.0
 
 
-def get_year_score(target_year: int, year: int) -> float:
+def get_year_score(target_year: int, year: int | None) -> float:
+    if year is None:
+        return 0.0
     if target_year <= year <= target_year + 1:
         return 1.0
     if year < target_year - 2 or year > target_year + 2:
