@@ -50,7 +50,11 @@ class RecentlyAddedTask:
             return
 
         for movie in recently_added_movies:
+            if movie in self.recent_cache:
+                continue
+
             self.process_movie(movie)
+
             time.sleep(self.sleep_interval)
 
         # Trim cache so only the most recent movies remain relevant
@@ -61,9 +65,6 @@ class RecentlyAddedTask:
         self.missing_cache.save()
 
     def process_movie(self, movie: Movie) -> None:
-        if movie in self.recent_cache:
-            return
-
         tmdb_id = self.plex_manager.get_tmdb_id(movie["plex_movie_id"])
         if not tmdb_id:
             logger.warning(
