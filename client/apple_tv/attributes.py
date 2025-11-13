@@ -38,7 +38,7 @@ def item_from_attributes(url: str, attributes: Attributes) -> ItemView:
     )
 
 
-def get_attributes(
+def parse_attributes(
     page: BeautifulSoup, strip_at_keys: bool = True
 ) -> Attributes | None:
     """
