@@ -1,19 +1,18 @@
 from __future__ import annotations
 
 import logging
-import os
 import time
+from typing import TYPE_CHECKING
 
 import requests
 
-from client.google.scoring import (
-    REQUIRED_SCORE,
-    STRONG_SCORE,
-    Scorer,
-    TargetSpec,
-    item_from_cse,
-)
+from client.google.parser import parse_item_from_cse
+from client.google.scoring import REQUIRED_SCORE, STRONG_SCORE, Scorer
 from client.google.utils import quote
+
+if TYPE_CHECKING:
+    from client.apple_tv.attributes import Attributes
+    from models.target import Target
 
 logger = logging.getLogger(__name__)
 
@@ -52,20 +51,12 @@ class SearchEngine:
 
     # --- public API ---
 
-    def query(
-        self,
-        title: str,
-        directors: list[str],
-        year: int,
-        country: str,
-        entity: str,  # "movie" | "show"
-    ) -> str | None:
-        entity = self._normalize_entity(entity)
-        country = self._normalize_country(country)
+    def query(self, target: Target) -> str | None:
+        title = target.title
+        directors = target.directors
+        entity = self._normalize_entity(target.entity)
+        country = self._normalize_country(target.country)
 
-        target = TargetSpec(
-            title=title, directors=directors, year=year, country=country, entity=entity
-        )
         queries = self._build_queries(title, directors, country, entity)
 
         best_score, best_url = 0.0, None
@@ -73,7 +64,7 @@ class SearchEngine:
 
         for q in queries:
             for raw in self._google_search(q):
-                item = item_from_cse(raw)
+                item = parse_item_from_cse(raw)
                 if item.url in seen:
                     continue
                 seen.add(item.url)
@@ -92,6 +83,10 @@ class SearchEngine:
                         return best_url
 
         return best_url if best_score >= REQUIRED_SCORE else None
+
+    def validate(self, url: str, attributes: Attributes | None, target: Target) -> bool:
+        score = self.scorer.score_attributes(url, attributes, target)
+        return score is not None and score >= REQUIRED_SCORE
 
     # --- internals ---
 
