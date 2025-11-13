@@ -102,8 +102,7 @@ class SearchEngine:
         country: str,
         entity: str,
     ) -> list[str]:
-        t = quote(title)
-        base = f"site:tv.apple.com/{country}/{entity} {t}"
+        base = f"site:tv.apple.com/{country}/{entity} {title}"
         queries: list[str] = []
         if directors:
             queries.append(f"{base} {quote(directors[0])}")
