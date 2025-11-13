@@ -28,15 +28,6 @@ def get_apple_tv_artworks(
     return attributes, poster_url, background_url, logo_url
 
 
-def get_attributes(url: str) -> Attributes | None:
-    response = get_request(url)
-    if response is None:
-        return None
-
-    parsed_page = parse_html(response.text)
-    return parse_attributes(parsed_page)
-
-
 def get_poster_url(attributes: Attributes) -> str | None:
     if "image" not in attributes:
         return None

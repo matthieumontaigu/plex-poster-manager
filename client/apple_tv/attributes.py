@@ -3,8 +3,8 @@ from typing import TypedDict, cast
 
 from bs4 import BeautifulSoup
 
-from client.google.scoring import ItemView
-from client.google.utils import parse_release_year
+from utils.parsing import parse_html
+from utils.requests_utils import get_request
 
 
 class Person(TypedDict):
@@ -23,19 +23,13 @@ class Attributes(TypedDict):
     image: str
 
 
-def item_from_attributes(url: str, attributes: Attributes) -> ItemView:
-    title = attributes["name"]
-    directors = attributes.get("director")
-    director = directors[0]["name"] if directors else None
-    date = attributes["datePublished"]
-    release_year = parse_release_year(date)
+def get_attributes(url: str) -> Attributes | None:
+    response = get_request(url)
+    if response is None:
+        return None
 
-    return ItemView(
-        url=url,
-        title=title,
-        director=director,
-        release_year=release_year,
-    )
+    parsed_page = parse_html(response.text)
+    return parse_attributes(parsed_page)
 
 
 def parse_attributes(
