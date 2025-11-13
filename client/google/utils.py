@@ -3,7 +3,6 @@ from __future__ import annotations
 import html
 import re
 import unicodedata
-from datetime import datetime
 
 # ---------- text normalization & similarity ----------
 
@@ -17,14 +16,6 @@ def strip_accents(s: str) -> str:
 def norm_text(s: str) -> str:
     s = html.unescape((s or "").strip().lower())
     s = strip_accents(s)
-    s = re.sub(r"[^\w\s]", " ", s, flags=re.UNICODE)
-    s = re.sub(r"\s+", " ", s).strip()
-    return s
-
-
-def clean_title(s: str) -> str:
-    s = re.sub(r"\s*-\s*Apple\s*TV\s*$", "", s)
-    s = html.unescape((s or "").strip())
     s = re.sub(r"[^\w\s]", " ", s, flags=re.UNICODE)
     s = re.sub(r"\s+", " ", s).strip()
     return s
@@ -53,15 +44,6 @@ def quote(s: str) -> str:
 def first_int4(s: str) -> int | None:
     m = re.search(r"\b(19|20)\d{2}\b", s or "")
     return int(m.group(0)) if m else None
-
-
-def parse_release_year(iso_or_text: str) -> int | None:
-    t = (iso_or_text or "").strip()
-    try:
-        return datetime.fromisoformat(t.replace("Z", "+00:00")).year
-    except Exception:
-        pass
-    return first_int4(t)
 
 
 def normalize_url(url: str) -> str:
