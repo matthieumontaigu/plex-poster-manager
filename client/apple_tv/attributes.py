@@ -24,6 +24,7 @@ class Attributes(TypedDict):
 
 
 def item_from_attributes(url: str, attributes: Attributes) -> ItemView:
+    title = attributes["name"]
     directors = attributes.get("director")
     director = directors[0]["name"] if directors else None
     date = attributes["datePublished"]
@@ -31,7 +32,7 @@ def item_from_attributes(url: str, attributes: Attributes) -> ItemView:
 
     return ItemView(
         url=url,
-        title=attributes["name"],
+        title=title,
         director=director,
         release_year=release_year,
     )
