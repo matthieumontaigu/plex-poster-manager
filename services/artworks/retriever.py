@@ -34,6 +34,7 @@ class ArtworksRetriever:
         self.provider = provider
         self.localizer = localizer
         self.retrieve_interval = retrieve_interval
+        self.countries_priority = countries_priority
 
         self.countries_providers = [
             CountryProvider(provider, localizer, country)
@@ -44,6 +45,12 @@ class ArtworksRetriever:
             if fallback_logo_provider
             else None
         )
+
+    def get_country_rank(self, country: str) -> int:
+        try:
+            return self.countries_priority.index(country)
+        except ValueError:
+            return len(self.countries_priority)
 
     def retrieve(self, movie: Movie) -> Artworks:
         artworks: Artworks = {
