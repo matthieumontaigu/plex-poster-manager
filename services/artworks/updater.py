@@ -54,7 +54,7 @@ class ArtworksUpdater:
         """
         new_artworks = self.fetch(movie)
 
-        if new_artworks == current_artworks:
+        if not self.are_better(new_artworks, current_artworks):
             return "unchanged_artworks", new_artworks
 
         uploaded = self.uploader.upload(movie, new_artworks)
@@ -68,3 +68,27 @@ class ArtworksUpdater:
             return "imperfect_artworks", new_artworks
 
         return "success", new_artworks
+
+    def are_better(
+        self,
+        new_artworks: Artworks,
+        current_artworks: Artworks | None,
+    ) -> bool:
+        """Determine if the new artworks are better than the current ones."""
+        if current_artworks == new_artworks:
+            return False
+
+        if current_artworks is None:
+            return True
+
+        current_poster = current_artworks["poster"]
+        if current_poster is None:
+            return True
+
+        new_poster = new_artworks["poster"]
+        if new_poster is None:
+            return False
+
+        current_rank = self.retriever.get_country_rank(current_poster["country"])
+        new_rank = self.retriever.get_country_rank(new_poster["country"])
+        return new_rank <= current_rank
