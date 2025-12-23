@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 import requests
 
 from client.google.parser import parse_item_from_cse
-from client.google.scoring import REQUIRED_SCORE, STRONG_SCORE, Scorer
+from client.google.scoring import REQUIRED_SCORE, STRONG_SCORE, VALIDATION_SCORE, Scorer
 from client.google.utils import quote
 
 if TYPE_CHECKING:
@@ -86,7 +86,7 @@ class SearchEngine:
 
     def validate(self, url: str, attributes: Attributes | None, target: Target) -> bool:
         score = self.scorer.score_attributes(url, attributes, target)
-        return score is not None and score >= REQUIRED_SCORE
+        return score is not None and score >= VALIDATION_SCORE
 
     # --- internals ---
 

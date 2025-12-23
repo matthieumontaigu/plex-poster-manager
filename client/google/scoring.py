@@ -13,6 +13,7 @@ if TYPE_CHECKING:
 
 STRONG_SCORE = 4.0  # 2.0 for title match, 1.0 for director, 1.0 for year
 REQUIRED_SCORE = 1.9  # at least a title match at 95% or matching director and year
+VALIDATION_SCORE = 2.5  # strong match on at least two of title/director/year
 
 DISALLOWED_RE = re.compile(
     "|".join(
