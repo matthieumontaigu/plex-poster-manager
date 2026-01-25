@@ -1,9 +1,10 @@
 import re
-from urllib.parse import urlsplit, urlunsplit
+import time
+from urllib.parse import urlparse, urlsplit, urlunsplit
 
 from bs4 import BeautifulSoup
 
-from client.apple_tv.attributes import Attributes, parse_attributes
+from client.apple_tv.attributes import Attributes, get_umc_id, parse_attributes
 from utils.parsing import parse_html
 from utils.requests_utils import get_request
 
@@ -21,19 +22,54 @@ def get_apple_tv_artworks(
     if attributes is None:
         return None, None, None, None
 
-    poster_url = get_poster_url(attributes)
+    poster_url = get_poster_url(parsed_page, url)
     background_url = get_background_url(parsed_page)
     logo_url = get_logo_url(parsed_page)
 
     return attributes, poster_url, background_url, logo_url
 
 
-def get_poster_url(attributes: Attributes) -> str | None:
+def get_cover_art_url(attributes: Attributes) -> str | None:
     if "image" not in attributes:
         return None
 
     image_url = attributes["image"]
     return get_enlarged_image_url(image_url, "2000x0w.jpg")
+
+
+def get_poster_url(page: BeautifulSoup, url: str) -> str | None:
+    movie_umc_id = get_umc_id(url)
+    if not movie_umc_id:
+        return None
+
+    pattern = re.compile(r"^person-lockup")
+    crew = page.find_all("a", class_=pattern, href=True)
+    if not crew:
+        return None
+
+    person = crew[0]
+    person_url = person["href"]
+    person_movies_url = person_url_to_movies_collection(person_url)
+    if not person_movies_url:
+        return None
+
+    time.sleep(0.5)  # Be nice to Apple servers
+    response = get_request(person_movies_url)
+    if response is None:
+        return None
+
+    parsed_page = parse_html(response.text)
+    matching_movie = [
+        a for a in parsed_page.find_all("a", href=True) if movie_umc_id in a["href"]
+    ]
+    if not matching_movie:
+        return None
+
+    picture = matching_movie[0].picture
+    if not picture:
+        return None
+
+    return get_image_url(picture, "2000x0w.jpg")
 
 
 def get_logo_url(page: BeautifulSoup) -> str | None:
@@ -44,7 +80,7 @@ def get_logo_url(page: BeautifulSoup) -> str | None:
     if not pictures:
         return None
 
-    return get_image_url(pictures[0], "2400x900", "png")
+    return get_image_url(pictures[0], "2400x900.png")
 
 
 def get_background_url(page: BeautifulSoup) -> str | None:
@@ -55,36 +91,46 @@ def get_background_url(page: BeautifulSoup) -> str | None:
     if not pictures:
         return None
 
-    return get_image_url(pictures[0], "4320x3240", "jpg")
+    return get_image_url(pictures[0], "4320x3240.jpg")
 
 
-def get_image_url(picture: BeautifulSoup, size: str, extension: str) -> str | None:
-    srcsets = [source.get("srcset") for source in picture.find_all("source")]
-    srcset = None
-    file_extension = f".{extension} "
-    for srcset in srcsets:
-        if file_extension in srcset:
-            break
-    if not srcset:
+def get_image_url(picture: BeautifulSoup, size: str) -> str | None:
+    size_parts = size.split(".")
+    if len(size_parts) != 2:
+        raise ValueError("Size must be in the format 'WIDTHxHEIGHT.extension'")
+
+    image_url = get_matching_source_url(picture, size_parts[1])
+
+    if not image_url:
         return None
 
-    image_url = srcset.split(", ")[0].split(" ")[0]
-    target_size = f"{size}.{extension}"
-    return get_resized_image_url(image_url, target_size)
+    return get_enlarged_image_url(image_url, size)
 
 
-def get_enlarged_image_url(url: str, target_size: str) -> str:
-    """Get the largest available image by replacing size with target_size'2000x0w.jpg'"""
+def get_matching_source_url(picture: BeautifulSoup, extension: str) -> str | None:
+    expected_extension = f".{extension} "
+    for source in picture.find_all("source"):
+        srcset = source.get("srcset")
+        if not srcset or expected_extension not in srcset:
+            continue
+
+        return srcset.split(", ")[0].split(" ")[0]
+
+    return None
+
+
+def get_enlarged_image_url(url: str, size: str) -> str:
+    """Get the largest available image by replacing with input size '2000x0w.jpg'"""
 
     parts = urlsplit(url)
 
     # Split path at the last '/'
     path_parts = parts.path.rsplit("/", 1)
     if len(path_parts) == 2:
-        path_parts[-1] = target_size
+        path_parts[-1] = size
         new_path = "/".join(path_parts)
     else:
-        new_path = target_size
+        new_path = size
 
     # Rebuild URL with new path
     return urlunsplit(
@@ -92,7 +138,27 @@ def get_enlarged_image_url(url: str, target_size: str) -> str:
     )
 
 
-def get_resized_image_url(url: str, size: str) -> str:
-    """Example: size = 3840x2160.jpg"""
-    extension = size.split(".")[-1]
-    return re.sub(r"[\w]+x[\w]+\-?[\d]+\.{}$".format(extension), size, url)
+def person_url_to_movies_collection(url: str) -> str | None:
+    """
+    Extract the `umc.*` identifier from an Apple TV person URL and
+    return the corresponding movies collection URL, keeping the same
+    scheme, domain, and country code.
+
+    Example
+    -------
+    https://tv.apple.com/us/person/josh-o-connor/umc.cpc.2kgky0blff2lspn7skq8vff13
+    ->
+    https://tv.apple.com/us/collection/movies/uts.col.movies_of_person?ctx_person=umc.cpc.2kgky0blff2lspn7skq8vff13
+    """
+    umc_id = get_umc_id(url)
+    if not umc_id:
+        return None
+
+    # Keep scheme + domain + country prefix (e.g. /us)
+    parsed = urlparse(url)
+    path_parts = parsed.path.strip("/").split("/")
+    if not path_parts:
+        return None
+
+    country = path_parts[0]
+    return f"{parsed.scheme}://{parsed.netloc}/{country}/collection/movies/uts.col.movies_of_person?ctx_person={umc_id}"
