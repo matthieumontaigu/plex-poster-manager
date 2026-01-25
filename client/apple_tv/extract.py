@@ -22,6 +22,7 @@ def get_apple_tv_artworks(
     if attributes is None:
         return None, None, None, None
 
+    time.sleep(0.5)  # Wait before next request needed for poster extraction
     poster_url = get_poster_url(parsed_page, url)
     background_url = get_background_url(parsed_page)
     logo_url = get_logo_url(parsed_page)
@@ -37,7 +38,7 @@ def get_cover_art_url(attributes: Attributes) -> str | None:
     return get_enlarged_image_url(image_url, "2000x0w.jpg")
 
 
-def get_poster_url(page: BeautifulSoup, url: str) -> str | None:
+def get_poster_url(page: BeautifulSoup, url: str, max_persons: int = 3) -> str | None:
     movie_umc_id = get_umc_id(url)
     if not movie_umc_id:
         return None
@@ -47,13 +48,21 @@ def get_poster_url(page: BeautifulSoup, url: str) -> str | None:
     if not crew:
         return None
 
-    person = crew[0]
-    person_url = person["href"]
+    crew_to_test = crew[:max_persons]  # Limit to first max_persons persons only
+    for person in crew_to_test:
+        person_url = person["href"]
+        poster_url = get_poster_from_person(person_url, movie_umc_id)
+        if poster_url:
+            return poster_url
+
+        time.sleep(1.0)  # Be nice to Apple servers
+
+
+def get_poster_from_person(person_url: str, movie_umc_id: str) -> str | None:
     person_movies_url = person_url_to_movies_collection(person_url)
     if not person_movies_url:
         return None
 
-    time.sleep(0.5)  # Be nice to Apple servers
     response = get_request(person_movies_url)
     if response is None:
         return None
