@@ -1,4 +1,5 @@
 import json
+import re
 from typing import TypedDict, cast
 
 from bs4 import BeautifulSoup
@@ -21,6 +22,24 @@ class Attributes(TypedDict):
     director: list[Person]
     datePublished: str
     image: str
+
+
+UMC_PATTERN = re.compile(r"(umc\.[A-Za-z0-9._-]+)")
+
+
+def get_umc_id(url: str) -> str | None:
+    """
+    Extract the `umc.*` identifier from an Apple TV URL, or None if not found.
+
+    Example
+    -------
+    https://tv.apple.com/us/movie/the-matrix/umc.cmc.4xyz12345
+    -> umc.cmc.4xyz12345
+    """
+    match = UMC_PATTERN.search(url)
+    if not match:
+        return None
+    return match.group(1)
 
 
 def get_attributes(url: str) -> Attributes | None:
