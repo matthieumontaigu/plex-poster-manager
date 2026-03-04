@@ -60,14 +60,14 @@ class SearchEngine:
         queries = self._build_queries(title, directors, country, entity)
 
         best_score, best_url = 0.0, None
-        seen: set[str] = set()
+        seen: set[tuple[str, str | None]] = set()
 
         for q in queries:
             for raw in self._google_search(q):
                 item = parse_item_from_cse(raw)
-                if item.url in seen:
+                if (item.url, item.title) in seen:
                     continue
-                seen.add(item.url)
+                seen.add((item.url, item.title))
 
                 if not self.scorer.is_candidate_url(item.url):
                     continue
