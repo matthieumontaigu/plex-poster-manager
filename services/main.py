@@ -59,6 +59,11 @@ class ArtworksConfig(TypedDict):
     movies_sleep_interval: NotRequired[float]
 
 
+class MissingArtworksTaskConfig(TypedDict):
+    search_quota: int
+    recent_threshold_days: int
+
+
 class ScheduleConfig(TypedDict):
     type: str
     params: tuple[int, ...]
@@ -79,6 +84,7 @@ class Config(TypedDict):
     tmdb: TMDBConfig
     google: GoogleSearchConfig
     artworks: ArtworksConfig
+    missing_artworks_task: MissingArtworksTaskConfig
     schedules: dict[str, ScheduleConfig]
     cache: CacheConfig
     log: LogConfig
@@ -112,6 +118,10 @@ if __name__ == "__main__":
 
     artworks_config = config["artworks"]
     sleep_interval = artworks_config.get("movies_sleep_interval", 1.0)
+
+    missing_artworks_task_config = config["missing_artworks_task"]
+    search_quota = missing_artworks_task_config["search_quota"]
+    recent_threshold_days = missing_artworks_task_config["recent_threshold_days"]
 
     selector_config = artworks_config["selector"]
     artworks_selector = ArtworksSelector(**selector_config)
@@ -155,7 +165,12 @@ if __name__ == "__main__":
     )
 
     missing_artworks_task = MissingArtworksTask(
-        plex_manager, artworks_updater, missing_artworks_cache, sleep_interval
+        plex_manager,
+        artworks_updater,
+        missing_artworks_cache,
+        sleep_interval,
+        search_quota,
+        recent_threshold_days,
     )
 
     reverter_config = artworks_config["reverter"]
