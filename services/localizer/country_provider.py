@@ -26,11 +26,11 @@ class CountryProvider:
 
     def get_artworks(
         self, movie: Movie
-    ) -> tuple[Image | None, Image | None, Image | None]:
+    ) -> tuple[Image | None, Image | None, Image | None, int]:
 
         localized_title = self.localizer.get_localized_title(movie, self.country)
         if not localized_title:
-            return None, None, None
+            return None, None, None, 0
 
         base_image = {"title": localized_title, **self.base_image}
 
@@ -41,13 +41,15 @@ class CountryProvider:
             self.country,
             "movie",
         )
-        poster_url, background_url, logo_url = self.provider.get_artworks(*search_args)
+        poster_url, background_url, logo_url, search_count = self.provider.get_artworks(
+            *search_args
+        )
 
         poster = build_image(poster_url, **base_image)
         background = build_image(background_url, **base_image)
         logo = build_image(logo_url, **base_image)
 
-        return poster, background, logo
+        return poster, background, logo, search_count
 
     def get_localized_title(self, movie: Movie) -> str | None:
         return self.localizer.get_localized_title(movie, self.country)
