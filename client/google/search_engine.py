@@ -45,13 +45,12 @@ class SearchEngine:
         self.min_interval_s = float(min_interval_s)
         self.timeout_s = float(timeout_s)
         self._last_call_ts = 0.0
-        self.query_count = 0
 
         self.scorer = scorer or Scorer()
 
     # --- public API ---
 
-    def query(self, target: Target) -> str | None:
+    def query(self, target: Target) -> tuple[str | None, int]:
         title = target.title
         directors = target.directors
         entity = self._normalize_entity(target.entity)
@@ -61,8 +60,10 @@ class SearchEngine:
 
         best_score, best_url = 0.0, None
         seen: set[tuple[str, str | None]] = set()
+        query_count = 0
 
         for q in queries:
+            query_count += 1
             for raw in self._google_search(q):
                 item = parse_item_from_cse(raw)
                 if (item.url, item.title) in seen:
@@ -80,9 +81,9 @@ class SearchEngine:
                 if score > best_score:
                     best_score, best_url = score, item.url
                     if best_score >= STRONG_SCORE:
-                        return best_url
+                        return best_url, query_count
 
-        return best_url if best_score >= REQUIRED_SCORE else None
+        return (best_url if best_score >= REQUIRED_SCORE else None), query_count
 
     def validate(self, url: str, attributes: Attributes | None, target: Target) -> bool:
         score = self.scorer.score_attributes(url, attributes, target)
@@ -106,7 +107,6 @@ class SearchEngine:
 
     def _google_search(self, query: str, num: int = 10) -> list[dict]:
         self._respect_min_interval()
-        self.query_count += 1
 
         params = {
             "key": self.api_key,
