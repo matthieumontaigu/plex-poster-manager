@@ -73,7 +73,8 @@ class RecentlyAddedTask:
             return
 
         movie["tmdb_id"] = tmdb_id
-        status, artworks = self.artworks_updater.update(movie, None)
+        status, artworks, search_count = self.artworks_updater.update(movie, None)
+        logger.debug(f"Search queries used for '{movie['title']}': {search_count}")
 
         if status == "upload_failed":
             logger.warning(f"✗ Upload failed for {movie['title']}")

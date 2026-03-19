@@ -41,12 +41,12 @@ class TestRecentlyAddedTask(unittest.TestCase):
             "5555",  # Movie 5
         ]
 
-        # ArtworksUpdater.update returns (status, artworks)
+        # ArtworksUpdater.update returns (status, artworks, search_count)
         artworks_updater.update.side_effect = [
-            ("success", ["artwork1"]),  # Movie 1
-            ("imperfect_artworks", ["artwork2"]),  # Movie 2
-            ("upload_failed", ["artwork3"]),  # Movie 3
-            ("empty_artworks", None),  # Movie 5
+            ("success", ["artwork1"], 2),  # Movie 1
+            ("imperfect_artworks", ["artwork2"], 2),  # Movie 2
+            ("upload_failed", ["artwork3"], 1),  # Movie 3
+            ("empty_artworks", None, 2),  # Movie 5
         ]
 
         task = RecentlyAddedTask(
