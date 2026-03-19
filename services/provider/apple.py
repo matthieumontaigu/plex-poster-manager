@@ -27,18 +27,18 @@ class AppleProvider(Provider):
         year: int,
         country: str,
         entity: str,
-    ) -> tuple[str | None, str | None, str | None]:
+    ) -> tuple[str | None, str | None, str | None, int]:
 
         target = Target(title, directors, year, country, entity)
 
-        apple_tv_url = self.search_engine.query(target)
+        apple_tv_url, search_count = self.search_engine.query(target)
         if not apple_tv_url:
-            return None, None, None
+            return None, None, None, search_count
 
         attributes, poster_url, background_url, logo_url = get_apple_tv_artworks(
             apple_tv_url
         )
         if not self.search_engine.validate(apple_tv_url, attributes, target):
-            return None, None, None
+            return None, None, None, search_count
 
-        return poster_url, background_url, logo_url
+        return poster_url, background_url, logo_url, search_count
