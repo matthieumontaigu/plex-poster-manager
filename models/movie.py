@@ -14,3 +14,4 @@ class Movie(TypedDict):
     guid: str | None
     tmdb_id: int | None
     artworks: NotRequired[Artworks]
+    last_checked_date: NotRequired[int]
