@@ -26,48 +26,48 @@ class ArtworksUpdater:
         self.selector = artworks_selector
         self.uploader = artworks_uploader
 
-    def process(self, movie: Movie) -> tuple[Artworks, bool]:
+    def process(self, movie: Movie) -> tuple[Artworks, bool, int]:
         """
         Fetch and upload artworks for a given movie.
 
         Returns:
-            tuple[Artworks, bool]: The fetched artworks and whether the upload was successful.
+            tuple[Artworks, bool, int]: The fetched artworks, whether the upload was
+            successful, and the number of Google search queries consumed.
         """
-        artworks = self.retriever.retrieve(movie)
-        selected_artworks = self.selector.select(artworks, movie)
-        uploaded = self.uploader.upload(movie, selected_artworks)
-        return artworks, uploaded
+        artworks, search_count = self.fetch(movie)
+        uploaded = self.uploader.upload(movie, artworks)
+        return artworks, uploaded, search_count
 
-    def fetch(self, movie: Movie) -> Artworks:
-        artworks = self.retriever.retrieve(movie)
+    def fetch(self, movie: Movie) -> tuple[Artworks, int]:
+        artworks, search_count = self.retriever.retrieve(movie)
         selected_artworks = self.selector.select(artworks, movie)
-        return selected_artworks
+        return selected_artworks, search_count
 
     def update(
         self, movie: Movie, current_artworks: Artworks | None
-    ) -> tuple[str, Artworks]:
+    ) -> tuple[str, Artworks, int]:
         """
         Update a single movie's artworks.
 
         Returns:
             str: status among ["success", "imperfect_artworks", "identical_artworks", "upload_failed"]
         """
-        new_artworks = self.fetch(movie)
+        new_artworks, search_count = self.fetch(movie)
 
         if not self.are_better(new_artworks, current_artworks):
-            return "unchanged_artworks", new_artworks
+            return "unchanged_artworks", new_artworks, search_count
 
         uploaded = self.uploader.upload(movie, new_artworks)
         if not uploaded:
-            return "upload_failed", new_artworks
+            return "upload_failed", new_artworks, search_count
 
         if self.selector.are_empty(new_artworks):
-            return "empty_artworks", new_artworks
+            return "empty_artworks", new_artworks, search_count
 
         if not self.selector.are_perfect(new_artworks, movie):
-            return "imperfect_artworks", new_artworks
+            return "imperfect_artworks", new_artworks, search_count
 
-        return "success", new_artworks
+        return "success", new_artworks, search_count
 
     def are_better(
         self,
