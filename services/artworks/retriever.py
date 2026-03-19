@@ -52,18 +52,20 @@ class ArtworksRetriever:
         except ValueError:
             return len(self.countries_priority)
 
-    def retrieve(self, movie: Movie) -> Artworks:
+    def retrieve(self, movie: Movie) -> tuple[Artworks, int]:
         artworks: Artworks = {
             "poster": None,
             "background": None,
             "logo": None,
         }
+        search_count = 0
 
         for country_provider in self.countries_providers:
             logger.debug(
                 f"Fetching {country_provider.country.upper()} artworks for '{movie['title']}'"
             )
-            poster, background, logo = country_provider.get_artworks(movie)
+            poster, background, logo, count = country_provider.get_artworks(movie)
+            search_count += count
 
             self.update_image(artworks, "poster", poster)
             self.update_image(artworks, "background", background)
@@ -78,7 +80,7 @@ class ArtworksRetriever:
             fallback_logo = self.fallback_logo_provider.get_logo(movie, artworks)
             self.update_image(artworks, "fallback_logo", fallback_logo)
 
-        return artworks
+        return artworks, search_count
 
     def update_image(
         self, artworks: Artworks, artwork_name: str, new_image: Image | None

@@ -21,7 +21,7 @@ class TestArtworksUpdater(unittest.TestCase):
         """Movie not found, no artworks"""
 
         countries = ["fr"]
-        self.provider.get_artworks.return_value = (None, None, None)
+        self.provider.get_artworks.return_value = (None, None, None, 1)
 
         self.artworks_retriever = ArtworksRetriever(
             self.provider, self.localizer, countries
@@ -39,7 +39,7 @@ class TestArtworksUpdater(unittest.TestCase):
             "tmdb_id": None,
         }
 
-        artworks = self.artworks_retriever.retrieve(movie)
+        artworks, _ = self.artworks_retriever.retrieve(movie)
 
         expected_artworks = {
             "poster": None,
@@ -52,7 +52,7 @@ class TestArtworksUpdater(unittest.TestCase):
         """Movie not found, no artworks"""
 
         countries = ["fr", "us", "gb", "de", "lu"]
-        self.provider.get_artworks.return_value = (None, None, None)
+        self.provider.get_artworks.return_value = (None, None, None, 1)
 
         self.artworks_retriever = ArtworksRetriever(
             self.provider, self.localizer, countries
@@ -70,7 +70,7 @@ class TestArtworksUpdater(unittest.TestCase):
             "tmdb_id": None,
         }
 
-        artworks = self.artworks_retriever.retrieve(movie)
+        artworks, _ = self.artworks_retriever.retrieve(movie)
 
         expected_artworks = {
             "poster": None,
@@ -86,6 +86,7 @@ class TestArtworksUpdater(unittest.TestCase):
             "poster_url_fr",
             "background_url_fr",
             "logo_url_fr",
+            1,
         )
         self.localizer.get_localized_title.return_value = (
             "Captain America : Brave New World"
@@ -107,7 +108,7 @@ class TestArtworksUpdater(unittest.TestCase):
             "tmdb_id": None,
         }
 
-        artworks = self.artworks_retriever.retrieve(movie)
+        artworks, _ = self.artworks_retriever.retrieve(movie)
 
         expected_artworks = {
             "poster": {
@@ -136,8 +137,8 @@ class TestArtworksUpdater(unittest.TestCase):
 
         countries = ["fr", "us"]
         self.provider.get_artworks.side_effect = [
-            ("poster_url_fr", "background_url_fr", "logo_url_fr"),
-            ("poster_url_us", "background_url_us", "logo_url_us"),
+            ("poster_url_fr", "background_url_fr", "logo_url_fr", 1),
+            ("poster_url_us", "background_url_us", "logo_url_us", 1),
         ]
         self.localizer.get_localized_title.side_effect = [
             "Captain America : Brave New World",
@@ -160,7 +161,7 @@ class TestArtworksUpdater(unittest.TestCase):
             "tmdb_id": None,
         }
 
-        artworks = self.artworks_retriever.retrieve(movie)
+        artworks, _ = self.artworks_retriever.retrieve(movie)
 
         expected_artworks = {
             "poster": {
@@ -189,8 +190,8 @@ class TestArtworksUpdater(unittest.TestCase):
 
         countries = ["fr", "us"]
         self.provider.get_artworks.side_effect = [
-            ("poster_url_fr", None, "logo_url_fr"),
-            ("poster_url_us", "background_url_us", "logo_url_us"),
+            ("poster_url_fr", None, "logo_url_fr", 1),
+            ("poster_url_us", "background_url_us", "logo_url_us", 1),
         ]
         self.localizer.get_localized_title.side_effect = [
             "Captain America : Brave New World",
@@ -213,7 +214,7 @@ class TestArtworksUpdater(unittest.TestCase):
             "tmdb_id": None,
         }
 
-        artworks = self.artworks_retriever.retrieve(movie)
+        artworks, _ = self.artworks_retriever.retrieve(movie)
 
         expected_artworks = {
             "poster": {
@@ -242,8 +243,8 @@ class TestArtworksUpdater(unittest.TestCase):
 
         countries = ["fr", "us"]
         self.provider.get_artworks.side_effect = [
-            ("poster_url_fr", "background_url_fr", None),
-            ("poster_url_us", "background_url_us", "logo_url_us"),
+            ("poster_url_fr", "background_url_fr", None, 1),
+            ("poster_url_us", "background_url_us", "logo_url_us", 1),
         ]
         self.localizer.get_localized_title.side_effect = [
             "Captain America : Brave New World",
@@ -266,7 +267,7 @@ class TestArtworksUpdater(unittest.TestCase):
             "tmdb_id": None,
         }
 
-        artworks = self.artworks_retriever.retrieve(movie)
+        artworks, _ = self.artworks_retriever.retrieve(movie)
 
         expected_artworks = {
             "poster": {
@@ -295,8 +296,8 @@ class TestArtworksUpdater(unittest.TestCase):
 
         countries = ["fr", "us"]
         self.provider.get_artworks.side_effect = [
-            ("poster_url_fr", None, None),
-            ("poster_url_us", "background_url_us", "logo_url_us"),
+            ("poster_url_fr", None, None, 1),
+            ("poster_url_us", "background_url_us", "logo_url_us", 1),
         ]
         self.localizer.get_localized_title.side_effect = [
             "Captain America : Brave New World",
@@ -319,7 +320,7 @@ class TestArtworksUpdater(unittest.TestCase):
             "tmdb_id": None,
         }
 
-        artworks = self.artworks_retriever.retrieve(movie)
+        artworks, _ = self.artworks_retriever.retrieve(movie)
 
         expected_artworks = {
             "poster": {
@@ -343,13 +344,13 @@ class TestArtworksUpdater(unittest.TestCase):
         }
         self.assertEqual(artworks, expected_artworks)
 
-    def test_get_artworks_two_countries_FR_missing(self):
+    def test_get_artworks_two_countries_background_and_logo_missing(self):
         """Movie not found in FR, but found in US, so US poster and logo used."""
 
         countries = ["fr", "us"]
         self.provider.get_artworks.side_effect = [
-            (None, None, None),
-            ("poster_url_us", "background_url_us", "logo_url_us"),
+            (None, None, None, 1),
+            ("poster_url_us", "background_url_us", "logo_url_us", 1),
         ]
         self.localizer.get_localized_title.side_effect = [
             "Captain America : Brave New World",
@@ -372,7 +373,7 @@ class TestArtworksUpdater(unittest.TestCase):
             "tmdb_id": None,
         }
 
-        artworks = self.artworks_retriever.retrieve(movie)
+        artworks, _ = self.artworks_retriever.retrieve(movie)
 
         expected_artworks = {
             "poster": {
@@ -401,8 +402,8 @@ class TestArtworksUpdater(unittest.TestCase):
 
         countries = ["fr", "us"]
         self.provider.get_artworks.side_effect = [
-            ("poster_url_fr", "background_url_fr", None),
-            ("poster_url_us", "background_url_us", "logo_url_us"),
+            ("poster_url_fr", "background_url_fr", None, 1),
+            ("poster_url_us", "background_url_us", "logo_url_us", 1),
         ]
         self.localizer.get_localized_title.side_effect = [
             "Captain America : Brave New World",
@@ -429,7 +430,7 @@ class TestArtworksUpdater(unittest.TestCase):
             "tmdb_id": 1111,
         }
 
-        artworks = self.artworks_retriever.retrieve(movie)
+        artworks, _ = self.artworks_retriever.retrieve(movie)
 
         expected_artworks = {
             "poster": {
@@ -464,8 +465,8 @@ class TestArtworksUpdater(unittest.TestCase):
 
         countries = ["fr", "us"]
         self.provider.get_artworks.side_effect = [
-            (None, None, None),
-            ("poster_url_us", "background_url_us", None),
+            (None, None, None, 1),
+            ("poster_url_us", "background_url_us", None, 1),
         ]
         self.localizer.get_localized_title.side_effect = [
             "Captain America : Brave New World",
@@ -492,7 +493,7 @@ class TestArtworksUpdater(unittest.TestCase):
             "tmdb_id": 1111,
         }
 
-        artworks = self.artworks_retriever.retrieve(movie)
+        artworks, _ = self.artworks_retriever.retrieve(movie)
 
         expected_artworks = {
             "poster": {
@@ -522,8 +523,8 @@ class TestArtworksUpdater(unittest.TestCase):
 
         countries = ["fr", "us"]
         self.provider.get_artworks.side_effect = [
-            (None, None, None),
-            ("poster_url_us", "background_url_us", None),
+            (None, None, None, 1),
+            ("poster_url_us", "background_url_us", None, 1),
         ]
         self.localizer.get_localized_title.side_effect = [
             "Captain America : Brave New World",
@@ -550,7 +551,7 @@ class TestArtworksUpdater(unittest.TestCase):
             "tmdb_id": 1111,
         }
 
-        artworks = self.artworks_retriever.retrieve(movie)
+        artworks, _ = self.artworks_retriever.retrieve(movie)
 
         expected_artworks = {
             "poster": {
