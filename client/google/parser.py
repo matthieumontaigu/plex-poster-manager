@@ -75,7 +75,7 @@ def parse_item_from_apple_tv_attributes(url: str, attributes: Attributes) -> Ite
 
 
 def clean_title(s: str) -> str:
-    s = re.sub(r"\s*-\s*Apple\s*TV\s*$", "", s)
+    s = re.sub(r"\s*(?:-\s*)?Apple\s*TV\s*$", "", s)
     s = html.unescape((s or "").strip())
     s = re.sub(r"[^\w\s]", " ", s, flags=re.UNICODE)
     s = re.sub(r"\s+", " ", s).strip()
